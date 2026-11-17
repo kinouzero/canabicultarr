@@ -1,0 +1,49 @@
+/* One layout for page searches and searches inside teleported module dialogs. */
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters {
+ display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); align-items: end;
+ width: 100%; max-width: none; min-width: 0; box-sizing: border-box;
+ gap: var(--space-3); margin: var(--ui-content-gap) 0; padding: var(--search-panel-padding, var(--ui-panel-inset));
+ background: var(--search-panel-background, var(--theme-subtle, #fafbf8));
+ border: var(--search-panel-border, 1px solid var(--theme-border, #e6ebdf)); border-radius: var(--search-panel-radius, .75rem);
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters :is(.filter-field, .reference-select) {
+ display: flex; flex-direction: column; align-items: stretch; gap: var(--space-1-5);
+ width: 100%; min-width: 0; margin: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters label { margin: 0; font-size: .76rem; line-height: 1.4; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters :is(input:not([type=checkbox]):not([type=radio]), select) {
+ width: 100%; min-width: 0; max-width: 100%; height: 2.5rem; box-sizing: border-box; margin: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > .n-button {
+ flex: 0 0 auto; height: 2.5rem; min-height: 2.5rem; margin: 0; align-self: flex-end;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters .filter-checkbox {
+ display: flex; align-items: center; gap: var(--space-1-5); flex: 0 1 auto; min-height: 2.5rem; width: auto;
+}
+/* Keep the reading and keyboard order identical: search/sort, filters, reset. */
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > :is(.filter-primary, .filter-secondary) {
+ grid-column: 1 / -1; display: grid; align-items: end; gap: var(--space-3); min-width: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > .filter-primary {
+ grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > .filter-secondary {
+ grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > .filter-secondary:not(:has(> *)) { display: none; }
+@media (max-width: 480px) {
+ :is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters > .filter-primary { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+ :is(#workspace-content.workspace-pages, .n-card.app-dialog) .search-filters { padding: var(--search-panel-padding, var(--ui-panel-inset)); gap: var(--space-2); }
+}
+
+/* Inherit the enclosing surface instead of drawing a second frame. */
+#workspace-content.workspace-pages :is(.n-card:not(.detail-only), .module-workspace),
+#workspace-content.workspace-pages > .comment-templates,
+.n-card.app-dialog {
+ --search-panel-padding: 0;
+ --search-panel-border: 0;
+ --search-panel-radius: 0;
+ --search-panel-background: transparent;
+}

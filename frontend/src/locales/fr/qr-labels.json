@@ -1,0 +1,13 @@
+{
+  "open": "QR code",
+  "title": "Étiquette QR",
+  "close": "Fermer l’étiquette QR",
+  "image": "QR code de {name}",
+  "help": "Le scan ouvre cette fiche. La connexion et les droits d’accès restent nécessaires.",
+  "addressHelp": "Ouvrez l’adresse accessible depuis votre téléphone avant d’imprimer. Une adresse localhost fonctionne uniquement sur cet ordinateur.",
+  "svg": "SVG",
+  "png": "PNG",
+  "print": "Imprimer",
+  "error": "Impossible de préparer cette étiquette. Réessayez.",
+  "linkLabel": "Adresse de la fiche"
+}

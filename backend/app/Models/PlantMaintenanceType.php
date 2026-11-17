@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+
+class PlantMaintenanceType extends Model
+{
+    use HasUuids;
+
+    protected $guarded = ['id'];
+
+    protected $hidden = ['name_key', 'created_at', 'updated_at'];
+
+    protected $attributes = ['version' => 1];
+
+    protected function casts(): array
+    {
+        return ['version' => 'integer'];
+    }
+}

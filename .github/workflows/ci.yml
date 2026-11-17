@@ -1,0 +1,521 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  frontend:
+    name: Frontend checks and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-fund
+      - name: Audit frontend dependencies
+        run: npm run audit
+      - name: Check shared behavior and regressions
+        run: npm run test:unit:coverage
+      - name: Check public offline worker behavior
+        run: npm run test:pwa
+      - name: Typecheck and build
+        run: npm run build
+      - name: Upload frontend build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  backend:
+    name: Backend (${{ matrix.database }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, postgres]
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      DB_CONNECTION: ${{ matrix.database == 'postgres' && 'pgsql' || 'sqlite' }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_DATABASE: ${{ matrix.database == 'postgres' && 'canabicultarr_test' || ':memory:' }}
+      DB_USERNAME: canabicultarr_test
+      DB_PASSWORD: ci-test-password
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      REDIS_HOST: 127.0.0.1
+      REDIS_DB: 15
+      REDIS_TESTS: '1'
+    services:
+      redis:
+        image: redis:8.4.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      postgres:
+        image: timescale/timescaledb:2.31.0-pg18
+        env:
+          POSTGRES_DB: canabicultarr_test
+          POSTGRES_USER: canabicultarr_test
+          POSTGRES_PASSWORD: ci-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U canabicultarr_test -d canabicultarr_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: mbstring, dom, xml, pdo_sqlite, pdo_pgsql, intl, zip, bcmath, redis, gd, exif
+          coverage: pcov
+          tools: composer:v2
+      - name: Validate Composer manifest and lockfile
+        run: composer validate --strict
+      - name: Prepare isolated environment
+        run: |
+          cp ../.env.example ../.env
+          ln -s ../.env .env
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Generate test application key
+        run: php artisan key:generate --force --no-interaction
+      - name: Check PHP formatting
+        if: matrix.database == 'sqlite'
+        run: vendor/bin/pint --test
+      - name: Run migrations against PostgreSQL
+        if: matrix.database == 'postgres'
+        run: php artisan migrate --force --no-interaction
+      - name: Run the complete suite for this database
+        run: php vendor/bin/phpunit --coverage-php coverage/${{ matrix.database }}.cov
+      - name: Upload native database coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-coverage-${{ matrix.database }}
+          path: backend/coverage/${{ matrix.database }}.cov
+          if-no-files-found: error
+          retention-days: 7
+
+  backend-coverage:
+    name: Combined backend coverage
+    needs: backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: mbstring, dom, xml, pdo_sqlite, pdo_pgsql, intl, zip, bcmath, redis, gd, exif
+          coverage: none
+          tools: composer:v2
+      - name: Install coverage library
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      - name: Download native database coverage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: backend-coverage-*
+          path: backend/coverage
+          merge-multiple: true
+      - name: Merge database coverage and prevent regressions
+        run: php scripts/merge-coverage.php coverage/combined 94 coverage/sqlite.cov coverage/postgres.cov
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-coverage
+          path: backend/coverage/combined
+          if-no-files-found: warn
+          retention-days: 7
+
+  browser-runtime:
+    name: Shared Chromium runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked browser tooling
+        run: npm ci --no-fund
+      - name: Download Chromium once
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-browsers
+        run: |
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" >> "$GITHUB_ENV"
+          npx playwright install chromium --no-shell
+      - name: Archive executable browser files
+        run: tar -czf "$RUNNER_TEMP/chromium.tar.gz" -C "$PLAYWRIGHT_BROWSERS_PATH" .
+      - name: Share matching Chromium runtime
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chromium-ubuntu-24.04
+          path: ${{ runner.temp }}/chromium.tar.gz
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+
+  runtime-e2e:
+    name: Packaged runtime, development proxy and PWA
+    needs: browser-runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - name: Install the tested Compose version
+        uses: docker/setup-compose-action@7b9b4fd7682727f5b8a7557423a54ef1e2dfdd46
+        with:
+          version: v5.7.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install browser test dependencies
+        working-directory: frontend
+        run: npm ci --no-fund
+      - name: Download shared Chromium runtime
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: chromium-ubuntu-24.04
+          path: ${{ runner.temp }}/chromium-artifact
+      - name: Restore executable browser files
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-browsers
+        run: |
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" >> "$GITHUB_ENV"
+          mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
+          tar -xzf "$RUNNER_TEMP/chromium-artifact/chromium.tar.gz" -C "$PLAYWRIGHT_BROWSERS_PATH"
+      - name: Verify Chromium system dependencies
+        working-directory: frontend
+        run: |
+          if ! npx playwright screenshot --channel chromium about:blank "$RUNNER_TEMP/chromium-smoke.png"; then
+            npx playwright install-deps chromium
+            npx playwright screenshot --channel chromium about:blank "$RUNNER_TEMP/chromium-smoke.png"
+          fi
+      - name: Build production application for PWA checks
+        working-directory: frontend
+        run: npm run build
+      - name: Verify production installation and offline privacy
+        working-directory: frontend
+        run: npm run test:pwa:e2e
+      - name: Verify packaged runtime
+        run: sh scripts/test-container.sh
+      - name: Verify development proxy
+        run: sh scripts/test-development.sh
+      - name: Upload failed runtime diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: runtime-failure-diagnostics
+          path: |
+            frontend/test-results-pwa
+            frontend/test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+  authentication-e2e:
+    name: Browser flows (${{ matrix.shard }}/4)
+    needs: browser-runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - name: Install the tested Compose version
+        uses: docker/setup-compose-action@7b9b4fd7682727f5b8a7557423a54ef1e2dfdd46
+        with:
+          version: v5.7.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install browser test dependencies
+        working-directory: frontend
+        run: npm ci --no-fund
+      - name: Download shared Chromium runtime
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: chromium-ubuntu-24.04
+          path: ${{ runner.temp }}/chromium-artifact
+      - name: Restore executable browser files
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright-browsers
+        run: |
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" >> "$GITHUB_ENV"
+          mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
+          tar -xzf "$RUNNER_TEMP/chromium-artifact/chromium.tar.gz" -C "$PLAYWRIGHT_BROWSERS_PATH"
+      - name: Verify Chromium system dependencies
+        working-directory: frontend
+        run: |
+          if ! npx playwright screenshot --channel chromium about:blank "$RUNNER_TEMP/chromium-smoke.png"; then
+            npx playwright install-deps chromium
+            npx playwright screenshot --channel chromium about:blank "$RUNNER_TEMP/chromium-smoke.png"
+          fi
+      - name: Run isolated browser shard
+        env:
+          APP_COVERAGE_SHARD: '1'
+          AUTH_E2E_BOOTSTRAP: '1'
+        run: sh scripts/test-browser-coverage.sh --grep-invert account-activation.spec.ts --shard=${{ matrix.shard }}/4
+      - name: Upload native browser coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-coverage-shard-${{ matrix.shard }}
+          path: frontend/coverage/browser/raw
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload matching coverage source maps
+        if: matrix.shard == 1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-coverage-build
+          path: frontend/dist-coverage
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload failed browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-failure-diagnostics-${{ matrix.shard }}
+          path: frontend/test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+  browser-coverage:
+    name: Combined browser coverage
+    needs: authentication-e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install coverage library
+        run: npm ci --no-fund
+      - name: Download matching coverage source maps
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: browser-coverage-build
+          path: frontend/dist-coverage
+      - name: Download all browser shards
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: browser-coverage-shard-*
+          path: frontend/coverage/shards
+      - name: Merge browser coverage and prevent regressions
+        env:
+          APP_COVERAGE_MIN_BYTES: '90'
+        run: >-
+          node scripts/merge-browser-coverage.ts
+          coverage/shards/browser-coverage-shard-1
+          coverage/shards/browser-coverage-shard-2
+          coverage/shards/browser-coverage-shard-3
+          coverage/shards/browser-coverage-shard-4
+      - name: Upload browser coverage
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-coverage
+          path: frontend/coverage/browser
+          if-no-files-found: warn
+          retention-days: 7
+
+  infrastructure:
+    name: Compose and bootstrap checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - name: Install the tested Compose version
+        uses: docker/setup-compose-action@7b9b4fd7682727f5b8a7557423a54ef1e2dfdd46
+        with:
+          version: v5.7.0
+      - name: Check shell syntax
+        run: |
+          for script in scripts/bootstrap.sh scripts/test-bootstrap.sh scripts/test-auth-e2e.sh scripts/test-container.sh scripts/test-development.sh infrastructure/app/*.sh; do
+            sh -n "$script"
+          done
+      - name: Run bootstrap contract checks
+        run: sh scripts/test-bootstrap.sh
+      - name: Check configuration contracts
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Check server Bluetooth bridge
+        run: python3 -m unittest discover -s backend/scripts/bluetooth -p 'test_*.py' -v
+      - name: Validate Compose configuration
+        env:
+          DB_PASSWORD: ci-compose-validation
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          docker compose -f compose.yaml -f compose.dev.yaml config --quiet
+          python3 scripts/test-environment.py "$RUNNER_TEMP/compose.json"
+          docker compose -f "$RUNNER_TEMP/compose.json" config --quiet
+      - name: Build unified application image
+        run: docker build --target runtime --tag canabicultarr-app:ci -f infrastructure/app/Dockerfile .
+
+  publish:
+    name: GitHub release and container images
+    needs: [frontend, backend-coverage, browser-coverage, runtime-e2e, infrastructure]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_SHA: ${{ github.sha }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - name: Check version and registry configuration
+        id: release
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          test -n "$DOCKERHUB_USERNAME" || { echo 'Configure DOCKERHUB_USERNAME.' >&2; exit 1; }
+          test -n "$DOCKERHUB_TOKEN" || { echo 'Configure DOCKERHUB_TOKEN.' >&2; exit 1; }
+          RELEASE_SHA=$(git rev-parse --verify 'HEAD^{commit}')
+          export RELEASE_SHA
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          python3 scripts/release-metadata.py
+      - name: Sign in to GitHub Container Registry
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+      - name: Sign in to Docker Hub
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set up ARM emulation
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+      - name: Set up Docker Buildx
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Build and publish the tested runtime
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: infrastructure/app/Dockerfile
+          target: runtime
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.release.outputs.image_tags }}
+          labels: |
+            org.opencontainers.image.title=Canabicultarr
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.RELEASE_SHA }}
+            org.opencontainers.image.version=${{ steps.release.outputs.version }}
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
+          provenance: true
+          sbom: true
+      - name: Publish GitHub release after both registries succeed
+        if: steps.release.outputs.publish == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          PRERELEASE: ${{ steps.release.outputs.prerelease }}
+          GHCR_IMAGE: ${{ steps.release.outputs.ghcr }}
+          HUB_IMAGE: ${{ steps.release.outputs.hub }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          lines = ['Container images (Linux AMD64 and ARM64):', '']
+          for key in ['GHCR_IMAGE', 'HUB_IMAGE']:
+              lines.append('`docker pull ' + os.environ[key] + ':' + os.environ['RELEASE_VERSION'] + '`')
+              lines.append('')
+          lines.append('Built from the exact commit that passed CI. See the installation guide before first startup or updating.')
+          Path(os.environ['RUNNER_TEMP'], 'release-notes.md').write_text('\n'.join(lines))
+          PY
+          if [ "$PRERELEASE" = true ]; then
+            gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" --title "$RELEASE_TAG" \
+              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --prerelease --latest=false
+          else
+            gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" --title "$RELEASE_TAG" \
+              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --latest
+          fi

@@ -1,0 +1,14 @@
+{
+  "title": "Activate your account",
+  "description": "Confirm your email address to sign in.",
+  "resendDescription": "Request a new activation email.",
+  "confirm": "Activate account",
+  "resend": "Send activation email",
+  "sent": "If an account is waiting for activation, an email will arrive shortly.",
+  "success": "Your account is activated. You can sign in.",
+  "required": "Activate your account using the email link before signing in.",
+  "invalidLink": "This activation link is invalid, expired or already used. Request a new one.",
+  "unavailable": "Account creation requires configured SMTP and a trusted public application URL. Contact the administrator.",
+  "emailHelp": "Enter the email address used to create your account.",
+  "checkEmail": "Check your email to activate your account. The link is valid for one hour."
+}

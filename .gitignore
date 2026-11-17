@@ -1,0 +1,40 @@
+# Private environment files; sanitized templates remain versioned.
+.env
+.env.*
+!.env.example
+
+# Installed dependencies and frontend build output.
+/backend/vendor/
+/backend/node_modules/
+/frontend/node_modules/
+/frontend/dist
+/frontend/.dist-backup-*/
+/frontend/.node_modules-backup-*/
+
+# Generated test reports and local runtime artifacts.
+/frontend/test-results*/
+/frontend/playwright-report/
+*.log
+*.tsbuildinfo
+
+# Private source exports, generated SQL, reports, and attachment bundles.
+/imports/
+
+# Python and macOS/network-share metadata.
+__pycache__/
+*.py[cod]
+.DS_Store
+.smbdelete*
+._*
+
+/backend/coverage/
+/frontend/coverage/
+/frontend/dist-coverage/
+
+**/.venv/
+
+# Local assistant instructions are not part of the published project.
+/AGENTS.md
+
+*.tar.age
+*.tar.age.part

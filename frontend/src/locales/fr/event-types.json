@@ -1,0 +1,53 @@
+{
+  "title": "Types d’événements",
+  "add": "Créer un type d’événement",
+  "edit": "Modifier le type d’événement",
+  "name": "Nom",
+  "icon": "Icône",
+  "contexts": "Contextes autorisés",
+  "contextHelp": "Chaque type utilise les champs habituels du journal : titre, texte, importance, date et contexte.",
+  "allowed": "Contextes autorisés : {contexts}",
+  "system": "Type système · protégé",
+  "systemHelp": "Les types système sont protégés. Les types personnalisés peuvent être archivés sans perdre les entrées ni les corrections existantes.",
+  "archived": "Archivé",
+  "active": "Actif",
+  "state": "État",
+  "all": "Tous",
+  "search": "Rechercher",
+  "empty": "Aucun type d’événement personnalisé.",
+  "saved": "Type d’événement enregistré.",
+  "contextNames": {
+    "none": "Sans contexte",
+    "site": "Site",
+    "room": "Pièce",
+    "zone": "Zone",
+    "asset": "Matériel",
+    "sensor": "Canal"
+  },
+  "icons": {
+    "journal": "Journal",
+    "eye": "Observation",
+    "scissors": "Entretien",
+    "water": "Arrosage",
+    "warning": "Incident",
+    "message": "Note",
+    "pot": "Pot",
+    "leaf": "Plante",
+    "info": "Information"
+  },
+  "errors": {
+    "conflict": "Ce type a changé. Rechargez-le avant d’enregistrer.",
+    "nameTaken": "Ce nom est déjà utilisé."
+  },
+  "validation": {
+    "name": "Indiquez un nom de 80 caractères maximum.",
+    "icon": "Choisissez une icône disponible.",
+    "contexts": "Choisissez au moins un contexte autorisé.",
+    "state": "Choisissez un état valide.",
+    "version": "Rechargez ce type avant d’enregistrer.",
+    "type": "Choisissez un type d’événement actif.",
+    "scope": "Ce contexte n’est pas autorisé pour le type d’événement."
+  },
+  "systemTitle": "Types système",
+  "customTitle": "Types personnalisés"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Activer votre compte",
+  "description": "Confirmez votre adresse email pour vous connecter.",
+  "resendDescription": "Demandez un nouvel email d’activation.",
+  "confirm": "Activer le compte",
+  "resend": "Envoyer le lien",
+  "sent": "Si un compte attend son activation, vous recevrez un email prochainement.",
+  "success": "Votre compte est activé. Vous pouvez vous connecter.",
+  "required": "Activez votre compte avec le lien reçu par email avant de vous connecter.",
+  "invalidLink": "Ce lien est invalide, expiré ou déjà utilisé. Demandez un nouveau lien.",
+  "unavailable": "La création de comptes nécessite un SMTP configuré et une adresse publique de confiance pour l’application. Contactez l’administrateur.",
+  "emailHelp": "Saisissez l’adresse email utilisée pour créer votre compte.",
+  "checkEmail": "Consultez vos emails pour activer votre compte. Le lien est valable une heure."
+}

@@ -1,0 +1,55 @@
+import { isolatedCompose } from './docker-fixture';
+import { revealTabbedControl } from './navigation';
+import { test, expect } from '../coverage/fixture';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { openModule } from './navigation';
+
+test('old-data purge requires a preview and confirmation and leaves automatic retention unlimited', async ({ page }) => {
+ const projectRoot = fileURLToPath(new URL('../../..', import.meta.url));
+ const prefix = [...isolatedCompose(), 'exec', '-T', 'app', 'php', '-r'];
+ const guard = String.raw`require 'vendor/autoload.php';$app=require 'bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();if(!app()->environment('testing')||config('database.default')!=='sqlite'||DB::connection()->getDatabaseName()!=='/var/www/html/storage/e2e.sqlite')throw new RuntimeException('Isolated E2E database required.');`;
+ const php = (code: string) => execFileSync('docker', [...prefix, guard + code], { cwd: projectRoot, env: { ...process.env, DB_PASSWORD: 'ci-e2e-password' }, stdio: 'pipe' });
+ const errors: string[] = []; page.on('pageerror', cause => errors.push(cause.message));
+ php(String.raw`App\Models\User::factory()->create(['name'=>'Retention administrator','email'=>'retention@example.test','password'=>'Fictional retention password 123!','permission_role_ids'=>[Database\Seeders\AccessProfileSeeder::defaultProfile('administrator')->id]]);$asset=App\Models\Asset::create(['name'=>'Retention fixture']);$type=App\Models\MeasurementType::create(['name'=>'Retention fixture','code'=>'retention_fixture','unit'=>'%']);$sensor=App\Models\Sensor::forceCreate(['name'=>'Retention channel','channel_key'=>'retention','asset_id'=>$asset->id,'measurement_type_id'=>$type->id]);foreach([[31,31],[1,1],[32,0]] as [$observed,$received])App\Models\Measurement::create(['sensor_id'=>$sensor->id,'value'=>'20','unit'=>'%','observed_at'=>now()->subDays($observed),'received_at'=>now()->subDays($received)]);`);
+ await page.addInitScript(() => localStorage.setItem('locale', 'fr')); await page.goto('/');
+ await (await revealTabbedControl(page.locator('#login-email'))).fill('retention@example.test'); await (await revealTabbedControl(page.locator('#login-password'))).fill('Fictional retention password 123!');
+ await page.getByRole('button', { name: 'Se connecter', exact: true }).click(); await openModule(page, 'instanceSettings');
+ await page.getByRole('tab', { name: 'Données', exact: true }).click();
+ await expect(page.getByText('Conservation illimitée', { exact: true })).toBeVisible();
+ await page.getByRole('button', { name: 'Purger les anciennes données', exact: true }).click();
+ let dialog = page.getByRole('dialog', { name: 'Purger les anciennes données', exact: true });
+ await expect(dialog.getByRole('button', { name: 'Confirmer la purge', exact: true })).toHaveCount(0);
+ await dialog.getByRole('button', { name: 'Voir l’aperçu', exact: true }).click();
+ await expect(dialog.getByText('Mesures concernées', { exact: true })).toBeVisible();
+ await expect(dialog.locator('dd').last()).toHaveText('1');
+ await dialog.getByRole('button', { name: 'Annuler', exact: true }).click();
+ expect(php(String.raw`echo App\Models\Measurement::where('sensor_id',App\Models\Sensor::where('channel_key','retention')->sole()->id)->count();`).toString()).toBe('3');
+ await page.getByRole('button', { name: 'Purger les anciennes données', exact: true }).click();
+ dialog = page.getByRole('dialog', { name: 'Purger les anciennes données', exact: true });
+ await dialog.getByRole('button', { name: 'Voir l’aperçu', exact: true }).click();
+ let expireOnce = true;
+ await page.route('**/api/v1/measurement-retention/confirm', async route => {
+  if (expireOnce) { expireOnce = false; await route.fulfill({ status: 422, json: { error: { code: 'retention.errors.previewExpired' } } }); }
+  else await route.continue();
+ });
+ await dialog.getByRole('button', { name: 'Confirmer la purge', exact: true }).click();
+ await expect(dialog.getByRole('button', { name: 'Voir l’aperçu', exact: true })).toBeVisible();
+ await expect(dialog.getByRole('button', { name: 'Confirmer la purge', exact: true })).toHaveCount(0);
+ await dialog.getByRole('button', { name: 'Voir l’aperçu', exact: true }).click();
+ await expect(dialog.getByText(/Cette action supprime définitivement/)).toBeVisible();
+ await page.screenshot({ path: test.info().outputPath('cana23-desktop.png'), fullPage: true, animations: 'disabled' });
+ await page.setViewportSize({ width: 390, height: 844 });
+ await page.screenshot({ path: test.info().outputPath('cana23-mobile.png'), fullPage: true, animations: 'disabled' });
+ await page.setViewportSize({ width: 1280, height: 900 });
+ await dialog.getByRole('button', { name: 'Confirmer la purge', exact: true }).click();
+ await expect(dialog).toHaveCount(0);
+ expect(php(String.raw`echo App\Models\Measurement::where('sensor_id',App\Models\Sensor::where('channel_key','retention')->sole()->id)->count();`).toString()).toBe('3');
+ php(String.raw`Artisan::call('queue:work',['connection'=>'database','--queue'=>'default','--once'=>true,'--sleep'=>0]);`);
+ await expect(page.getByRole('row').filter({ hasText: 'Purge ponctuelle' })).toContainText('Terminée', { timeout: 15000 });
+ expect(php(String.raw`echo App\Models\Measurement::where('sensor_id',App\Models\Sensor::where('channel_key','retention')->sole()->id)->count();`).toString()).toBe('2');
+ const state = await page.request.get('/api/v1/measurement-retention');
+ expect((await state.json()).data.policy.days).toBeNull();
+ await expect(page.getByText('Conservation illimitée', { exact: true })).toBeVisible();
+ expect(errors).toEqual([]);
+});

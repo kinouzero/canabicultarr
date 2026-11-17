@@ -1,0 +1,13 @@
+{
+  "title": "Recorded assignment",
+  "unknown": "Assignment unknown",
+  "legacy": "Historical assignment incomplete",
+  "recorded": "Recorded assignment",
+  "sources": {
+    "http": "HTTP",
+    "mqtt": "MQTT",
+    "home_assistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "bluetooth": "Bluetooth"
+  }
+}

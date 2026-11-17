@@ -1,0 +1,21 @@
+{
+  "integration": "Intégration Homebridge",
+  "description": "Accessoires et mesures Homebridge.",
+  "configureHelp": "Renseignez HOMEBRIDGE_URL, HOMEBRIDGE_USERNAME et HOMEBRIDGE_PASSWORD sur le serveur. Le jeton est renouvelé automatiquement. Activez l’accès aux accessoires dans Homebridge UI.",
+  "connected": "Homebridge est accessible.",
+  "browseEntities": "Parcourir les appareils Homebridge",
+  "entitySelector": "Sélecteur d’appareils Homebridge",
+  "search": "Rechercher un appareil ou un canal",
+  "noLinks": "Aucune mesure Homebridge importée pour le moment.",
+  "importHelp": "Importez les accessoires avec tous leurs canaux compatibles, puis renommez ou désactivez les canaux dans Matériels.",
+  "noMatches": "Aucun appareil compatible. Vérifiez l’accès aux accessoires dans Homebridge UI.",
+  "errors": {
+    "notConfigured": "La configuration Homebridge est absente ou invalide.",
+    "accessDenied": "Homebridge a refusé les identifiants ou leurs permissions.",
+    "entityMissing": "Une entité choisie n’est plus disponible dans Homebridge.",
+    "providerUnavailable": "Homebridge est injoignable ou a renvoyé une réponse invalide.",
+    "invalidResponse": "Homebridge a renvoyé des données inattendues.",
+    "instanceChanged": "Ce lien appartient à une autre instance Homebridge configurée.",
+    "twoFactorRequired": "Utilisez un compte Homebridge dédié sans double authentification pour cette intégration."
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "title": "Export measurements",
+  "format": "Format",
+  "generate": "Generate",
+  "help": "Small CSV files download directly. Larger CSV files and PDF reports run in the background and expire after 24 hours.",
+  "history": "Background exports",
+  "queued": "Export queued. You can close this window and return later.",
+  "downloaded": "Download started.",
+  "progress": "Export progress",
+  "rows": "{done} / {total} readings",
+  "download": "Download {format}",
+  "remove": "Remove file",
+  "cancel": "Cancel export",
+  "statuses": {
+    "queued": "Queued",
+    "processing": "Generating",
+    "ready": "Ready",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "expired": "Expired"
+  },
+  "columns": {
+    "format": "Format",
+    "status": "Status",
+    "expires": "Expires",
+    "actions": "Actions"
+  },
+  "errors": {
+    "failed": "The export could not be completed. Reload or try again.",
+    "busy": "The export queue or your 24-hour quota is full. Wait for an export to expire or finish.",
+    "expired": "This file expired. Generate a new export.",
+    "notReady": "The file is not ready yet.",
+    "accessLost": "Access changed. Generate a new export with your current permissions.",
+    "cancelled": "The export was cancelled.",
+    "tooLarge": "This period exceeds the row, file-size or processing limit. Choose a shorter period.",
+    "queueUnavailable": "An asynchronous queue is required.",
+    "requestConflict": "This request belongs to different export options. Start a new export.",
+    "inputInvalid": "Check the export options and period."
+  },
+  "empty": "No background exports yet."
+}

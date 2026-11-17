@@ -1,0 +1,27 @@
+{
+  "choose": "Choisir des fichiers",
+  "limit": "10 Mio par fichier",
+  "preview": "Aperçu de {name}",
+  "unknownType": "Fichier",
+  "remove": "Retirer {name}",
+  "tooLarge": "Le fichier dépasse 10 Mio.",
+  "invalidType": "Ce format de fichier n’est pas accepté.",
+  "tooMany": "Sélectionnez au maximum {count} fichiers.",
+  "confirm": "Importer",
+  "photoTitle": "Gérer les photos",
+  "failed": "L’envoi a échoué. Vérifiez l’erreur et réessayez.",
+  "states": {
+    "pending": "Prêt à envoyer",
+    "uploading": "Envoi en cours…",
+    "done": "Envoyé",
+    "error": "Échec de l’envoi"
+  },
+  "pendingHelp": "Envoyez les fichiers sélectionnés avant d’enregistrer cette action.",
+  "dropTitle": "Ajoutez vos fichiers",
+  "dropHint": "Glissez-déposez ou cliquez dans cette zone.",
+  "mobileHint": "Touchez pour choisir une photo ou un fichier sur votre appareil.",
+  "importTab": "Importer",
+  "libraryTab": "Bibliothèque",
+  "previewFailed": "Aperçu indisponible. Vous pouvez envoyer ce fichier.",
+  "closePreview": "Fermer l’aperçu"
+}

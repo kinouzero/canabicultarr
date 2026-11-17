@@ -1,0 +1,41 @@
+/* Single-line controls share a baseline across native and Naive UI fields.
+   Composite color fields, toggles, files and multiline editors own their sizing. */
+:root { --app-control-height: 2.5rem; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) :is(
+ input:not(.color-input):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="color"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+ select:not([multiple]):not([size])
+) {
+ box-sizing: border-box;
+ height: var(--app-control-height);
+ min-height: var(--app-control-height);
+ margin-block: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .n-input { width: 100%; min-width: 0; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .n-input input { width: 100%; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .app-tree-select { min-height: var(--app-control-height); }
+
+/* Field margins must not push an adjacent action below its control. */
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) :is(.theme-controls, .export-controls) > .field {
+ display: grid; gap: var(--ui-field-gap); margin: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) :is(.theme-controls, .export-controls) label { margin: 0; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) :is(.theme-controls, .cycle-action-add, .export-controls) > .n-button {
+ min-height: var(--app-control-height); margin: 0; align-self: end;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .duration-input { display: grid; gap: var(--ui-field-gap); align-content: start; min-width: 0; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .duration-input > label {
+ display: flex; align-items: center; gap: var(--ui-field-gap); margin: 0;
+}
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .duration-input > label svg { flex: 0 0 1em; width: 1em; height: 1em; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .duration-controls { margin-top: 0; align-items: start; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .duration-error { margin-top: 0; }
+
+/* Pagination keeps the selector, arrows and count on the same centerline. */
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .collection-page-size { margin-block: 0; }
+:is(#workspace-content.workspace-pages, .n-card.app-dialog) .collection-page-controls .list-action-button {
+ width: var(--app-control-height); height: var(--app-control-height);
+ min-width: var(--app-control-height); min-height: var(--app-control-height);
+}
+.n-card.app-dialog .dialog-close {
+ width: 2rem; height: 2rem; min-width: 2rem; min-height: 2rem; padding: 0;
+}

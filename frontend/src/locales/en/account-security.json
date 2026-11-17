@@ -1,0 +1,31 @@
+{
+  "title": "Account security",
+  "description": "Password and connected devices.",
+  "back": "Back to home",
+  "reload": "Refresh security status",
+  "sessionsTitle": "My application sessions",
+  "otherSessions": "Other recent sessions: {count}",
+  "sessionCountUnavailable": "The number of other sessions is unavailable.",
+  "sessionCountHelp": "Expired sessions are not counted. A recent session does not mean the device is currently online.",
+  "signOutHelp": "This action signs you out everywhere, including here. Sign in again and re-enable browser notifications if needed.",
+  "oidcHelp": "Your {provider} link stays active. Manage its password and sessions in {provider}.",
+  "passwordTitle": "Change my local password",
+  "currentPassword": "Current local password",
+  "newPassword": "New local password",
+  "confirmPassword": "Confirm the new password",
+  "changePassword": "Change password and sign out",
+  "revokeTitle": "Close all my sessions",
+  "revokeHelp": "Sign out all devices without changing your password, account details or permissions.",
+  "revokeSessions": "Close all my sessions",
+  "passwordChanged": "Your password was changed and all application sessions were closed. Sign in with your new password.",
+  "sessionsRevoked": "All your application sessions were closed. You can sign in again with your current password.",
+  "errors": {
+    "currentPasswordRequired": "Enter your current local password (at most 128 characters).",
+    "currentPasswordInvalid": "The current local password is incorrect.",
+    "passwordUnchanged": "Choose a password different from your current password.",
+    "localPasswordUnavailable": "This account has no local password available for confirmation. Contact an administrator."
+  },
+  "managePassword": "Change password",
+  "manageSessions": "Sign out my devices",
+  "cancel": "Cancel"
+}

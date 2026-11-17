@@ -1,0 +1,31 @@
+{
+  "title": "Sécurité du compte",
+  "description": "Mot de passe et appareils connectés.",
+  "back": "Retour à l’accueil",
+  "reload": "Actualiser la sécurité du compte",
+  "sessionsTitle": "Mes connexions à l’application",
+  "otherSessions": "Autres sessions récentes : {count}",
+  "sessionCountUnavailable": "Le nombre des autres connexions n’est pas disponible.",
+  "sessionCountHelp": "Les sessions expirées ne sont pas comptées. Une session récente ne signifie pas que l’appareil est en ligne.",
+  "signOutHelp": "Cette action vous déconnecte partout, y compris ici. Reconnectez-vous et réactivez les notifications du navigateur si nécessaire.",
+  "oidcHelp": "Votre compte {provider} reste associé. Gérez son mot de passe et ses sessions dans {provider}.",
+  "passwordTitle": "Changer mon mot de passe local",
+  "currentPassword": "Mot de passe local actuel",
+  "newPassword": "Nouveau mot de passe local",
+  "confirmPassword": "Confirmer le nouveau mot de passe",
+  "changePassword": "Changer le mot de passe et me déconnecter",
+  "revokeTitle": "Fermer toutes mes connexions",
+  "revokeHelp": "Déconnectez tous les appareils sans changer votre mot de passe, vos informations ou vos droits.",
+  "revokeSessions": "Fermer toutes mes connexions",
+  "passwordChanged": "Votre mot de passe a été changé et toutes vos connexions à l’application ont été fermées. Reconnectez-vous avec le nouveau mot de passe.",
+  "sessionsRevoked": "Toutes vos connexions à l’application ont été fermées. Vous pouvez vous reconnecter avec votre mot de passe actuel.",
+  "errors": {
+    "currentPasswordRequired": "Saisissez votre mot de passe local actuel (128 caractères maximum).",
+    "currentPasswordInvalid": "Le mot de passe local actuel est incorrect.",
+    "passwordUnchanged": "Choisissez un mot de passe différent du mot de passe actuel.",
+    "localPasswordUnavailable": "Ce compte ne dispose pas d’un mot de passe local pour confirmer cette action. Contactez un administrateur."
+  },
+  "managePassword": "Modifier le mot de passe",
+  "manageSessions": "Déconnecter mes appareils",
+  "cancel": "Annuler"
+}

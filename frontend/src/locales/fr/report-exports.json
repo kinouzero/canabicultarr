@@ -1,0 +1,41 @@
+{
+  "title": "Exporter les mesures",
+  "format": "Format",
+  "generate": "Générer",
+  "help": "Les petits CSV sont téléchargés directement. Les CSV plus volumineux et les PDF sont générés en arrière-plan et expirent après 24 heures.",
+  "history": "Exports en arrière-plan",
+  "queued": "Export en attente. Vous pouvez fermer cette fenêtre et revenir plus tard.",
+  "downloaded": "Téléchargement lancé.",
+  "progress": "Progression de l’export",
+  "rows": "{done} / {total} mesures",
+  "download": "Télécharger le {format}",
+  "remove": "Retirer le fichier",
+  "cancel": "Annuler l’export",
+  "statuses": {
+    "queued": "En attente",
+    "processing": "Génération",
+    "ready": "Disponible",
+    "failed": "Échec",
+    "cancelled": "Annulé",
+    "expired": "Expiré"
+  },
+  "columns": {
+    "format": "Format",
+    "status": "État",
+    "expires": "Expiration",
+    "actions": "Actions"
+  },
+  "errors": {
+    "failed": "L’export n’a pas pu aboutir. Rechargez ou réessayez.",
+    "busy": "La file d’exports ou votre quota sur 24 heures est plein. Attendez qu’un export expire ou se termine.",
+    "expired": "Ce fichier a expiré. Générez un nouvel export.",
+    "notReady": "Le fichier n’est pas encore prêt.",
+    "accessLost": "Les droits ont changé. Générez un nouvel export avec vos droits actuels.",
+    "cancelled": "L’export a été annulé.",
+    "tooLarge": "La période dépasse la limite de mesures, de taille ou de traitement. Choisissez une période plus courte.",
+    "queueUnavailable": "Une file d’attente asynchrone est nécessaire.",
+    "requestConflict": "Cette demande correspond à d’autres options. Lancez un nouvel export.",
+    "inputInvalid": "Vérifiez les options et la période de l’export."
+  },
+  "empty": "Aucun export en arrière-plan pour le moment."
+}

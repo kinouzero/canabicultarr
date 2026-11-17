@@ -1,0 +1,63 @@
+{
+  "manage": "Source diagnostics",
+  "title": "Source diagnostics",
+  "description": "Collection status and activity.",
+  "back": "Back to home",
+  "refresh": "Refresh diagnostics",
+  "loading": "Loading source diagnostics…",
+  "summary": "All registered sources",
+  "total": "Total sources",
+  "homeAssistant": "Home Assistant",
+  "http": "HTTP",
+  "configuration": "Local configuration",
+  "readingSummary": "Readings from enabled sources",
+  "summaryHelp": "Counts cover all your accessible locations, regardless of filters. Readings include enabled sources and sensors, hardware still in service and valid HTTP/MQTT settings.",
+  "freshnessHelp": "A reading is recent for at least 120 seconds, or twice the sensor’s expected interval if longer. Without an interval, freshness is unknown. This does not confirm that the device or provider is online.",
+  "asOf": "Freshness evaluated at {date}",
+  "search": "Sensor or device name",
+  "kind": "Source type",
+  "state": "Configuration",
+  "freshness": "Reading age",
+  "all": "All",
+  "filter": "Apply filters",
+  "empty": "No matching sources. Manually added sensors without a data link are not listed.",
+  "results": "Matching sources: {count}",
+  "observed": "Last reading time",
+  "received": "Receipt of that reading",
+  "attempt": "Last recorded collection attempt",
+  "success": "Last recorded collection success",
+  "accepted": "Last accepted reading",
+  "activityHelp": "The last reception and last reading may refer to different data. Delayed or repeated readings do not confirm current activity.",
+  "lastError": "Last recorded collection error",
+  "unknownError": "A recorded error is not recognized. Open the source settings for further inspection.",
+  "credentialInvalid": "The HTTP credential needs renewal.",
+  "history": "View readings for {name}",
+  "never": "Not recorded",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page {current} of {total}",
+  "pagination": "Source diagnostic pages",
+  "kinds": {
+    "home_assistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "http": "HTTP",
+    "mqtt": "MQTT"
+  },
+  "states": {
+    "enabled": "Enabled",
+    "paused": "Paused",
+    "sensor_disabled": "Sensor disabled",
+    "device_retired": "Device retired",
+    "credential_invalid": "Credential renewal required",
+    "source_unavailable": "Broker configuration unavailable"
+  },
+  "freshnesses": {
+    "fresh": "Recent reading",
+    "stale": "Old reading",
+    "missing": "No reading",
+    "unknown": "Interval not configured"
+  },
+  "validation": {
+    "filtersInvalid": "Check the filters and choose a valid page."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Confirmer la nouvelle adresse",
+  "description": "Saisissez la nouvelle adresse qui a reçu ce lien. Votre adresse actuelle reste active jusqu’à la confirmation.",
+  "emailHelp": "Utilisez la nouvelle adresse email, pas l’adresse actuelle.",
+  "confirm": "Confirmer l’adresse",
+  "pending": "Confirmation en attente : {email}",
+  "pendingHelp": "Votre adresse actuelle reste active. Confirmez la nouvelle avec le lien reçu, valable une heure.",
+  "resend": "Renvoyer le lien",
+  "cancel": "Annuler le changement",
+  "success": "Adresse confirmée. Les anciennes sessions ont été fermées ; connectez-vous avec la nouvelle adresse.",
+  "unavailable": "La confirmation par email est indisponible. Votre adresse actuelle reste active. Réessayez plus tard.",
+  "rateLimited": "Patientez une minute avant de demander un nouveau lien.",
+  "invalidLink": "Ce lien est invalide ou expiré. Connectez-vous avec votre adresse actuelle pour en demander un autre.",
+  "noPending": "Aucun changement d’adresse en attente.",
+  "emailTaken": "Cette adresse est déjà utilisée. Votre adresse actuelle reste active."
+}

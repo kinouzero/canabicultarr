@@ -1,0 +1,19 @@
+{
+  "profile": "Profil",
+  "edit": "Modifier mon profil",
+  "displayName": "Pseudo",
+  "email": "Adresse e-mail",
+  "save": "Enregistrer les modifications",
+  "cancel": "Annuler",
+  "saved": "Votre profil a été mis à jour.",
+  "preferences": "Préférences personnelles",
+  "preferencesHelp": "La langue et l’apparence sont mémorisées dans ce navigateur.",
+  "access": "Accès",
+  "accessHelp": "Vos droits sont gérés par un administrateur.",
+  "allLocations": "Tous les emplacements",
+  "locations": "Emplacements autorisés",
+  "linked": "{provider} associé",
+  "unlinked": "{provider} non associé",
+  "emailHelp": "Votre adresse actuelle reste active. Confirmez la nouvelle avec le lien reçu, valable une heure.",
+  "providerHelp": "Ces modifications concernent votre compte dans l’application. Votre identité {provider} reste associée et se gère séparément."
+}

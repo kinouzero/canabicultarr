@@ -1,0 +1,21 @@
+{
+  "integration": "Homebridge integration",
+  "description": "Homebridge accessories and readings.",
+  "configureHelp": "Set HOMEBRIDGE_URL, HOMEBRIDGE_USERNAME and HOMEBRIDGE_PASSWORD on the server. Tokens renew automatically. Enable accessory access in Homebridge UI.",
+  "connected": "Homebridge is reachable.",
+  "browseEntities": "Browse Homebridge devices",
+  "entitySelector": "Homebridge device selector",
+  "search": "Search a device or channel",
+  "noLinks": "No Homebridge readings imported yet.",
+  "importHelp": "Import complete accessories with all compatible channels, then rename or disable channels in Hardware.",
+  "noMatches": "No compatible devices. Check accessory access in Homebridge UI.",
+  "errors": {
+    "notConfigured": "Homebridge configuration is missing or invalid.",
+    "accessDenied": "Homebridge rejected the credentials or their permissions.",
+    "entityMissing": "A selected entity is no longer available in Homebridge.",
+    "providerUnavailable": "Homebridge could not be reached or returned an invalid response.",
+    "invalidResponse": "Homebridge returned unexpected data.",
+    "instanceChanged": "This link belongs to a different configured Homebridge instance.",
+    "twoFactorRequired": "Use a dedicated Homebridge account without two-factor authentication for this integration."
+  }
+}

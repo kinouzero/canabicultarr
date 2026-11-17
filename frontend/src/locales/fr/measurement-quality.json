@@ -1,0 +1,7 @@
+{
+  "unknown": "Qualité inconnue",
+  "good": "Bonne qualité",
+  "suspect": "Suspecte",
+  "invalid": "Invalide",
+  "help": "La qualité est distincte de la fraîcheur. Une qualité inconnue reste exploitable sans être vérifiée ; les valeurs suspectes et invalides sont exclues des graphiques, résumés, alertes et décisions d’arrosage."
+}

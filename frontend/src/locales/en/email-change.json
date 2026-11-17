@@ -1,0 +1,16 @@
+{
+  "title": "Confirm your new email",
+  "description": "Enter the new address that received this link. Your current address stays active until confirmation.",
+  "emailHelp": "Use the new email address, not your current address.",
+  "confirm": "Confirm email",
+  "pending": "Awaiting confirmation: {email}",
+  "pendingHelp": "Your current address remains active. Confirm the new address using the link sent to it, valid for one hour.",
+  "resend": "Resend link",
+  "cancel": "Cancel change",
+  "success": "Email confirmed. Previous sessions were closed; sign in with your new address.",
+  "unavailable": "Email confirmation is unavailable. Your current address remains active. Try again later.",
+  "rateLimited": "Wait one minute before requesting another link.",
+  "invalidLink": "This link is invalid or expired. Sign in with your current address to request another.",
+  "noPending": "No pending email change.",
+  "emailTaken": "This email is already in use. Your current address remains active."
+}

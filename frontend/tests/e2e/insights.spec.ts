@@ -1,0 +1,124 @@
+import { revealTabbedControl } from './navigation';
+import { test, expect } from '../coverage/fixture';
+import { insightRoutes } from './insights-fixture';
+import { openModule } from './navigation';
+
+test('measurements filter sensor health and favorites, open paged history and compare matching units', async ({ page }) => {
+ await page.setViewportSize({ width: 700, height: 900 });
+ const { requests, errors } = await insightRoutes(page);
+ await openModule(page, 'measurements');
+ const workspace = page.getByTestId('measurement-workspace');
+ await expect(workspace.getByRole('button', { name: 'Historique · Moisture one', exact: true })).toBeVisible();
+ await workspace.getByRole('button', { name: 'Mesure ancienne 1', exact: true }).click();
+ await expect.poll(() => requests.filter(url => url.pathname.endsWith('/measurements/overview')).at(-1)?.searchParams.get('status')).toBe('stale');
+ await workspace.getByRole('button', { name: 'Ajouter aux favoris', exact: true }).click();
+ await (await revealTabbedControl(workspace.locator('#measurement-favorites'))).selectOption('true');
+ await expect.poll(() => requests.filter(url => url.pathname.endsWith('/measurements/overview')).at(-1)?.searchParams.getAll('sensor_ids[]')).toEqual(['sensor-0']);
+ await workspace.getByRole('button', { name: 'Historique · Moisture one', exact: true }).click();
+ const dialog = page.getByRole('dialog', { name: 'Historique · Moisture one', exact: true });
+ await expect(dialog.getByTestId('report-mean')).toContainText('42');
+ await expect(dialog.locator('canvas')).toBeVisible();
+ await expect(dialog.getByRole('columnheader', { name: 'Affectation à la mesure', exact: true })).toBeVisible();
+ await expect(dialog.locator('.measurement-origin')).toContainText('Original measurement site');
+ await expect(dialog.locator('.measurement-origin')).toContainText('HTTP');
+ await dialog.getByRole('navigation', { name: 'Pages des données regroupées', exact: true }).getByRole('button', { name: 'Suivant', exact: true }).click();
+ await expect(dialog.getByRole('navigation', { name: 'Pages des données regroupées', exact: true })).toContainText('2 / 2');
+ const comparison = dialog.getByLabel('Comparer avec', { exact: true }).and(dialog.locator('select'));
+ await expect(comparison.locator('option')).toHaveText(['Sans comparaison', 'Moisture two · Fictional probe · %']);
+ const periodBox = await dialog.getByRole('combobox', { name: 'Période', exact: true }).boundingBox();
+ const groupingBox = await dialog.getByRole('combobox', { name: 'Regroupement en UTC', exact: true }).boundingBox();
+ expect(Math.abs(periodBox!.y + periodBox!.height - groupingBox!.y - groupingBox!.height)).toBeLessThan(2);
+ await (await revealTabbedControl(comparison)).selectOption('sensor-1');
+ await expect.poll(() => requests.filter(url => url.pathname.endsWith('/reports/sensors/sensor-1')).length).toBeGreaterThan(0);
+ const primary = requests.filter(url => url.pathname.endsWith('/reports/sensors/sensor-0')).at(-1)!;
+ const other = requests.filter(url => url.pathname.endsWith('/reports/sensors/sensor-1')).at(-1)!;
+ expect(other.searchParams.get('date_from')).toBe(primary.searchParams.get('date_from'));
+ expect(other.searchParams.get('date_to')).toBe(primary.searchParams.get('date_to'));
+ expect(other.searchParams.get('as_of')).toBe(primary.searchParams.get('date_to'));
+ const download = page.waitForEvent('download');
+ await dialog.getByRole('button', { name: 'Exporter', exact: true }).click();
+ const exporter = page.getByRole('dialog', { name: 'Exporter les mesures', exact: true });
+ await exporter.getByRole('button', { name: 'Générer', exact: true }).click();
+ await exporter.getByRole('button', { name: 'Fermer', exact: true }).click();
+ await download;
+ await (await revealTabbedControl(dialog.getByLabel('Période', { exact: true }).and(dialog.locator('select')))).selectOption('custom');
+ await (await revealTabbedControl(dialog.getByLabel('Du', { exact: true }))).fill('2099-01-01T12:00');
+ await expect(page.getByRole('alert').filter({ hasText: '31 jours maximum' }).first()).toContainText('31 jours maximum');
+ await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
+ expect(errors).toEqual([]);
+});
+
+test('culture overview filters real summaries and remembers visible sections on mobile', async ({ page }) => {
+ const { requests, errors } = await insightRoutes(page);
+ await openModule(page, 'overview');
+ const overview = page.getByTestId('culture-overview');
+ await expect(overview.getByTestId('culture-active')).toHaveText('3');
+ await (await revealTabbedControl(overview.getByLabel('Site', { exact: true }).and(overview.locator('select')))).selectOption('site-one');
+ await expect(overview.getByTestId('culture-active')).toHaveText('2');
+ await (await revealTabbedControl(overview.getByLabel('Activité enregistrée', { exact: true }).and(overview.locator('select')))).selectOption('30');
+ await expect.poll(() => requests.filter(url => url.pathname.endsWith('/culture/overview')).at(-1)?.searchParams.get('days')).toBe('30');
+ await overview.getByRole('button', { name: 'Personnaliser', exact: true }).click();
+ const customize = page.getByRole('dialog', { name: 'Personnaliser', exact: true });
+ await (await revealTabbedControl(customize.getByLabel('Plantes actives par variété', { exact: true }))).uncheck();
+ await customize.getByRole('button', { name: 'Fermer', exact: true }).last().click();
+ await expect(overview.getByRole('heading', { name: 'Plantes actives par variété', exact: true })).toHaveCount(0);
+ await page.reload(); await openModule(page, 'overview');
+ await expect(overview.getByLabel('Site', { exact: true }).and(overview.locator('select'))).toHaveValue('site-one');
+ await expect(overview.getByLabel('Activité enregistrée', { exact: true }).and(overview.locator('select'))).toHaveValue('30');
+ await expect(overview.getByRole('heading', { name: 'Plantes actives par variété', exact: true })).toHaveCount(0);
+ await page.setViewportSize({ width: 390, height: 844 });
+ await expect(overview.locator('canvas').first()).toBeVisible();
+ await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+ await page.screenshot({ path: test.info().outputPath('canabicultarr-insights-mobile.png'), fullPage: true, animations: 'disabled' });
+ expect(errors).toEqual([]);
+});
+
+test('display customization switches support keyboard, show all and independent saved views', async ({ page }) => {
+ const { errors } = await insightRoutes(page);
+ await openModule(page, 'measurements');
+ const workspace = page.getByTestId('measurement-workspace');
+ await workspace.getByRole('button', { name: 'Personnaliser', exact: true }).click();
+ const customize = page.getByRole('dialog', { name: 'Personnaliser', exact: true });
+ const summary = customize.getByRole('switch', { name: 'Chiffres clés', exact: true });
+ await expect(customize.getByRole('status')).toHaveText('3 / 3 visibles');
+ await (await revealTabbedControl(summary)).uncheck(); await expect(customize.getByRole('status')).toHaveText('2 / 3 visibles');
+ await summary.focus(); await page.keyboard.press('Space'); await expect(summary).toBeChecked();
+ await customize.getByText('Chiffres clés', { exact: true }).click(); await expect(summary).not.toBeChecked(); await page.keyboard.press('Escape'); await expect(customize).toHaveCount(0);
+ await expect(workspace.locator('.insight-metrics')).toHaveCount(0);
+ await workspace.getByRole('button', { name: 'Historique · Moisture one', exact: true }).click();
+ const history = page.getByRole('dialog', { name: 'Historique · Moisture one', exact: true });
+ await history.getByRole('button', { name: 'Personnaliser', exact: true }).click();
+ await expect(customize.getByRole('switch', { name: 'Chiffres clés', exact: true })).toBeChecked();
+ await (await revealTabbedControl(customize.getByRole('switch', { name: 'Tendances', exact: true }))).uncheck();
+ await page.keyboard.press('Escape'); await expect(customize).toHaveCount(0); await expect(history).toBeVisible(); await expect(history.locator('canvas')).toHaveCount(0);
+ await page.keyboard.press('Escape'); await expect(history).toHaveCount(0);
+ await page.reload(); await openModule(page, 'measurements');
+ await expect(workspace.locator('.insight-metrics')).toHaveCount(0);
+ await workspace.getByRole('button', { name: 'Personnaliser', exact: true }).click();
+ await expect(summary).not.toBeChecked(); await customize.getByRole('button', { name: 'Tout afficher', exact: true }).click();
+ await expect(customize.getByRole('status')).toHaveText('3 / 3 visibles'); await expect(customize.getByRole('button', { name: 'Tout afficher', exact: true })).toBeDisabled();
+ await customize.getByRole('button', { name: 'Fermer', exact: true }).click(); await expect(workspace.locator('.insight-metrics')).toBeVisible();
+ await workspace.getByRole('button', { name: 'Historique · Moisture one', exact: true }).click(); await expect(history.locator('canvas')).toHaveCount(0);
+ expect(errors).toEqual([]);
+});
+
+
+test('a writable binary channel without samples offers switching instead of statistics', async ({ page }) => {
+ const { requests, errors } = await insightRoutes(page);
+ let on = false;
+ const sent: unknown[] = [];
+ const sensor = { id: 'switch-one', name: 'Fictional light', isEnabled: true, switchControl: { kind: 'switch', canControl: true }, device: { id: 'light-one', name: 'Fictional light', category: 'socket', status: 'active', locations: [], plants: [] }, measurementType: { id: 'binary-type', name: 'Switch', code: 'switch', nature: 'binary', unit: null, decimalPlaces: 0 } };
+ await page.route('**/api/v1/measurements/overview?*', route => route.fulfill({ json: { data: [{ sensor, latest: null, status: 'missing' }], meta: { current_page: 1, last_page: 1, total: 1, per_page: 20 }, summary: { total: 1, fresh: 0, stale: 0, missing: 1, unknown: 0, disabled: 0 }, generatedAt: '2026-11-17T00:00:00Z' } }));
+ await page.route('**/api/v1/sensors/switch-one/switch', route => {
+  if (route.request().method() === 'POST') { const body = route.request().postDataJSON(); sent.push(body); on = body.is_on; return route.fulfill({ json: { data: { status: 'confirmed', isOn: on } } }); }
+  return route.fulfill({ json: { data: { isOn: on } } });
+ });
+ await openModule(page, 'measurements');
+ const workspace = page.getByTestId('measurement-workspace');
+ await expect(workspace.getByRole('button', { name: 'Historique · Fictional light', exact: true })).toHaveCount(0);
+ await workspace.getByRole('button', { name: 'Allumer · Fictional light', exact: true }).click();
+ await expect(workspace.getByRole('button', { name: 'Éteindre · Fictional light', exact: true })).toContainText('Allumé');
+ expect(sent).toEqual([{ is_on: true, request_id: expect.any(String) }]);
+ expect(requests.some(url => url.pathname.includes('/reports/sensors/switch-one'))).toBe(false);
+ expect(errors).toEqual([]);
+});

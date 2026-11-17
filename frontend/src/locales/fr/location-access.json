@@ -1,0 +1,12 @@
+{
+  "title": "Accès aux emplacements",
+  "all": "Accès à toute l’installation",
+  "help": "L’accès à un site inclut ses pièces et zones ; l’accès à une pièce inclut ses zones. Les droits des modules déterminent les actions possibles. Sans sélection, aucun lieu n’est accessible.",
+  "add": "Ajouter un emplacement",
+  "remove": "Retirer {name}",
+  "none": "Aucun emplacement sélectionné.",
+  "limited": "Votre accès est limité à certains emplacements.",
+  "errors": {
+    "invalidSelection": "Choisissez des sites, pièces ou zones existants."
+  }
+}

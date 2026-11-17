@@ -1,0 +1,54 @@
+{
+  "title": "Conservation des mesures",
+  "unlimited": "Conservation illimitée",
+  "policyDays": "Conserver {count} jours",
+  "help": "Gérez les mesures enregistrées par les capteurs. L’historique des plantes et les fichiers ne sont pas concernés.",
+  "purge": "Purger les anciennes données",
+  "configure": "Conservation automatique",
+  "disable": "Tout conserver",
+  "active": "Une purge est en attente ou en cours. Les compteurs se mettent à jour automatiquement.",
+  "history": "Dernières purges",
+  "days": "Ancienneté en jours",
+  "receiptGuard": "Seules les mesures observées et reçues avant cette ancienneté sont concernées.",
+  "cutoff": "Avant le",
+  "affected": "Mesures concernées",
+  "atLeast": "Au moins {count}",
+  "preview": "Voir l’aperçu",
+  "confirmManual": "Cette action supprime définitivement les mesures concernées avant la date affichée. Une sauvegarde sera nécessaire pour les récupérer.",
+  "confirmPolicy": "Cette action active la suppression automatique quotidienne et lance une purge maintenant. Les mesures supprimées ne pourront être récupérées que depuis une sauvegarde.",
+  "preserved": "Les événements des plantes, instantanés d’alertes, stocks et traces de sécurité sont conservés. Les graphiques et futurs exports utiliseront les mesures restantes.",
+  "confirmPurge": "Confirmer la purge",
+  "confirmEnable": "Activer et purger",
+  "cancel": "Arrêter la purge",
+  "modes": {
+    "manual": "Purge ponctuelle",
+    "policy": "Conservation automatique"
+  },
+  "statuses": {
+    "queued": "En attente",
+    "running": "En cours",
+    "completed": "Terminée",
+    "cancelled": "Arrêtée",
+    "failed": "Échec"
+  },
+  "columns": {
+    "createdAt": "Demandée le",
+    "mode": "Mode",
+    "cutoffAt": "Avant le",
+    "deletedCount": "Supprimées",
+    "status": "État",
+    "actions": "Actions"
+  },
+  "errors": {
+    "conflict": "Les réglages ont changé. Rechargez puis refaites un aperçu.",
+    "previewExpired": "Cet aperçu a expiré ou appartient à une autre session. Refaites un aperçu.",
+    "busy": "Une purge est déjà en attente. Patientez ou arrêtez-la.",
+    "failed": "La purge n’a pas pu aboutir. Vérifiez la file d’attente puis rechargez.",
+    "authorization": "Les droits ont changé. La purge a été arrêtée.",
+    "queueUnavailable": "Configurez une file d’attente asynchrone avant de lancer une purge."
+  },
+  "policyHelp": "Supprime chaque jour les mesures plus anciennes que la durée choisie. Activer ou modifier cette règle lance aussi une purge immédiate.",
+  "manualHelp": "Supprime les anciennes mesures une seule fois, après vérification de l’aperçu. La règle de conservation automatique reste inchangée.",
+  "enable": "Configurer",
+  "edit": "Modifier la règle"
+}

@@ -1,0 +1,12 @@
+/* Runtime colors come from the instance theme in both appearance modes. */
+:root { color-scheme: light; }
+html.app-dark { color-scheme: dark; }
+html.app-dark .app-shell.authenticated { background: var(--app-canvas); }
+html.app-dark body { background: var(--app-canvas); color: var(--app-text); }
+html.app-dark .genetics-tag {
+ /* The instance palette stays intact while adapting its tint for dark surfaces. */
+ --genetics-background: color-mix(in srgb, var(--genetics-color) 16%, var(--theme-surface));
+ --genetics-border: color-mix(in srgb, var(--genetics-color) 50%, var(--theme-surface));
+ --genetics-foreground: color-mix(in srgb, var(--genetics-color) 55%, white);
+}
+html.app-dark .n-modal-mask { background: var(--theme-overlay); }

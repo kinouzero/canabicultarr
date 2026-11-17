@@ -1,0 +1,152 @@
+/* Shared visual language for every content dialog, independent of lazy modules. */
+.n-card.app-dialog { --dialog-inset: var(--ui-panel-inset); --dialog-gap: var(--ui-content-gap); --dialog-grid-gap: var(--ui-grid-gap); --dialog-icon-gap: var(--ui-icon-gap); --dialog-heading-size: 2.25rem; background: var(--theme-surface, #fff); border-radius: 1.1rem; border: 1px solid var(--theme-border, #e6ebdf); overflow: visible; max-height: calc(100dvh - 2rem); box-shadow: 0 24px 90px color-mix(in srgb, var(--theme-shadow) 18%, transparent); color: var(--theme-text, #2a4030); }
+.n-card.app-dialog .n-card-header { padding: var(--space-4) var(--dialog-inset) var(--space-3); border-bottom: 0; background: var(--theme-surface, #fff); gap: var(--space-3); }
+.n-card.app-dialog .n-card-content { padding: var(--space-1-5) var(--dialog-inset) var(--dialog-inset); overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--theme-surface, #fff); min-width: 0; }
+.dialog-heading { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.dialog-heading-symbol { display: grid; place-items: center; width: var(--dialog-heading-size); height: var(--dialog-heading-size); flex-shrink: 0; border-radius: .65rem; background: var(--theme-subtle, #edf3e5); color: var(--theme-muted, #6d8655); }
+.dialog-heading-symbol svg { width: 1.15rem; height: 1.15rem; }
+.dialog-heading h3 { margin: 0; font-size: 1.05rem; line-height: 1.4; letter-spacing: -.02em; color: var(--theme-text, #29432f); overflow-wrap: anywhere; }
+.n-card.app-dialog .dialog-close { width: 2.1rem; height: 2.1rem; flex-shrink: 0; border: 0; background: var(--theme-subtle, #f0f4e9); color: var(--theme-muted, #5e7849); border-radius: .6rem; }
+.n-card.app-dialog .dialog-close:hover { background: var(--theme-subtle, #e5eddb); }
+.n-card.app-dialog .n-button { display: inline-flex; justify-content: center; align-items: center; gap: var(--dialog-icon-gap); min-height: 2.25rem; padding: var(--space-2) var(--space-3); font-size: .78rem; line-height: 1.4; border-radius: .55rem; max-width: 100%; }
+.n-card.app-dialog .n-button:not([data-action-icon]):not(.n-button--default-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--info-type):not(.n-button--tertiary-type):not(.dialog-close) { background: var(--theme-accent-fill, #6d8752); border-color: var(--theme-focus, #6d8752); color: var(--theme-accent-text, white); }
+.n-card.app-dialog .n-button--default-type { background: var(--theme-subtle, #f5f7f1); border-color: var(--theme-border, #e7ecdf); color: var(--theme-muted, #536940); }
+.n-card.app-dialog .n-button svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+.n-card.app-dialog .n-button__content { overflow-wrap: anywhere; min-width: 0; }
+.n-card.app-dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), .n-card.app-dialog select, .n-card.app-dialog textarea { border: 1px solid var(--theme-border, #cbd7c1); border-radius: .55rem; background: var(--theme-surface, #fff); color: inherit; padding: var(--space-2) var(--space-3); font: inherit; font-size: .82rem; min-width: 0; max-width: 100%; }
+.n-card.app-dialog :is(input, select, textarea, button, summary):focus-visible { outline: 2px solid var(--theme-focus, #648752); outline-offset: 2px; }
+.n-card.app-dialog input:disabled, .n-card.app-dialog select:disabled, .n-card.app-dialog textarea:disabled { opacity: .65; }
+.n-card.app-dialog input[aria-invalid="true"], .n-card.app-dialog textarea[aria-invalid="true"] { border-color: var(--theme-danger, #b34545); }
+.n-card.app-dialog.form-dialog .field { margin: var(--space-3) 0; min-width: 0; }
+.n-card.app-dialog.form-dialog .field > label { display: block; font-size: .78rem; margin-bottom: var(--space-1-5); font-weight: 500; }
+.n-card.app-dialog.form-dialog fieldset { padding: 0; margin: 0; border: 0; border-radius: 0; min-width: 0; }
+.n-card.app-dialog.form-dialog legend { padding: 0; margin-bottom: var(--space-2); font-size: .8rem; font-weight: 650; color: var(--theme-text); }
+.n-card.app-dialog p { font-size: .8rem; line-height: 1.65; overflow-wrap: anywhere; }
+.n-card.app-dialog .reference-picker.n-card { padding: 0; border: 0; box-shadow: none; background: transparent; }
+.n-card.app-dialog .reference-picker .n-card-content, .n-card.app-dialog .reference-picker .n-card-content { padding: 0; }
+.n-card.app-dialog .reference-picker .picker-heading h2 { display: none; }
+.n-card.app-dialog .reference-picker .picker-heading { justify-content: flex-end; }
+.n-card.app-dialog .reference-picker .picker-search { margin: var(--space-3) 0; }
+.n-card.app-dialog .reference-picker ul { margin: var(--space-3) 0; gap: var(--space-2); }
+.n-card.app-dialog .reference-picker li { border-color: var(--theme-border, #e1e8d9); border-radius: .65rem; padding: var(--space-3) var(--space-3); }
+.n-card.app-dialog .comment-templates h2 { font-size: 1rem; }
+.n-card.app-dialog .comment-templates li { padding: var(--space-3); border-color: var(--theme-border, #e1e8d9); }
+@media(max-width: 700px) { .n-card.app-dialog .n-card-header { padding: var(--space-3) var(--dialog-inset) var(--space-3); }.n-card.app-dialog .n-card-content { padding: var(--space-1-5) var(--dialog-inset) var(--dialog-inset); }.dialog-heading h3 { font-size: 1rem; }.n-card.app-dialog .n-button { font-size: .75rem; }.n-card.app-dialog .reference-picker li { flex-wrap: wrap; gap: var(--space-2); } }
+
+.n-card.app-dialog.form-dialog .n-card-content { padding-bottom: var(--space-3); }
+
+/* Form interiors use an explicit contract so lazy legacy panel styles cannot leak. */
+.n-card.app-dialog.form-dialog .dialog-form { display: grid; gap: var(--ui-grid-gap); min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.n-card.app-dialog.form-dialog .dialog-form .field { display: grid; gap: var(--space-1-5); margin: 0; min-width: 0; align-content: start; }
+.n-card.app-dialog.form-dialog .dialog-form :is(.field > label, .duration-input > label, label:not(:has(input[type="checkbox"], input[type="radio"]))) { margin: 0; font-size: .76rem; line-height: 1.4; font-weight: 550; color: var(--theme-muted, #4a6041); }
+.n-card.app-dialog.form-dialog .dialog-form > label:not(:has(input[type="checkbox"], input[type="radio"])) { display: grid; gap: var(--space-1-5); }
+.n-card.app-dialog.form-dialog .dialog-form :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea) { width: 100%; box-sizing: border-box; font-size: .8rem; line-height: 1.45; padding: var(--space-2) var(--space-3); border-color: var(--theme-border, #d9e1d1); border-radius: .6rem; }
+.n-card.app-dialog.form-dialog .dialog-form textarea { display: block; margin: 0; resize: vertical; }
+.n-card.app-dialog.form-dialog .dialog-form fieldset { display: grid; align-content: start; gap: var(--space-2); margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; min-width: 0; }
+.n-card.app-dialog.form-dialog .dialog-form legend { padding: 0; margin-bottom: var(--space-2); font-size: .8rem; font-weight: 650; color: var(--theme-text); }
+.n-card.app-dialog.form-dialog .dialog-form .n-alert { margin: 0; }
+.n-card.app-dialog.form-dialog .dialog-form p { margin: 0; font-size: .78rem; line-height: 1.55; color: var(--theme-muted, #66765b); }
+.n-card.app-dialog.form-dialog .dialog-form h4 { display: flex; align-items: center; gap: var(--space-1-5); margin: 0; font-size: .8rem; line-height: 1.5; color: var(--theme-text); }
+.n-card.app-dialog.form-dialog .dialog-form small { display: block; font-size: .7rem; line-height: 1.5; color: var(--theme-muted, #758369); }
+.n-card.app-dialog.form-dialog .dialog-form .field-error { color: var(--theme-danger, #b34545); }
+.n-card.app-dialog.form-dialog .dialog-form :is(input[type="checkbox"], input[type="radio"]) { width: 1rem; height: 1rem; margin: 0; flex: 0 0 auto; accent-color: var(--theme-accent-fill); }
+.n-card.app-dialog.form-dialog .dialog-form label:has(> input[type="checkbox"], > input[type="radio"]) { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: .78rem; line-height: 1.5; }
+.n-card.app-dialog.form-dialog .dialog-form :is(.metadata-grid, .event-form-grid, .asset-form-grid, .user-form-grid, .sensor-form-grid, .dialog-form-grid, .cycle-fields, .grid) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dialog-grid-gap); align-items: start; margin: 0; }
+.n-card.app-dialog.form-dialog .dialog-form .dialog-wide { grid-column: 1 / -1; }
+.n-card.app-dialog.form-dialog .dialog-form .duration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.n-card.app-dialog.form-dialog .dialog-form .duration-controls { grid-template-columns: minmax(0, 1fr) 7rem; gap: var(--space-1-5); }
+.n-card.app-dialog.form-dialog .dialog-form :is(.plant-heading, .catalog-actions, .asset-actions, .attachment-buttons) { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: var(--space-1-5); margin: 0; }
+.n-card.app-dialog.form-dialog .dialog-form fieldset > ul { display: grid; gap: var(--space-1-5); padding: 0; margin: 0; list-style: none; }
+.n-card.app-dialog.form-dialog .dialog-form fieldset > ul:empty { display: none; }
+.n-card.app-dialog.form-dialog .dialog-form .watering-choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.n-card.app-dialog.form-dialog .dialog-form .watering-choices label { flex: 1 1 10rem; gap: var(--space-2); padding: var(--space-3) var(--space-3); border: 1px solid var(--theme-border, #e0e6d9); border-radius: .6rem; background: var(--theme-surface, white); cursor: pointer; }
+.n-card.app-dialog.form-dialog .dialog-form .watering-choices label:has(input:checked) { border-color: var(--theme-focus, #91a77e); background: var(--theme-subtle, #f0f5e9); color: var(--theme-muted, #415b32); }
+.n-card.app-dialog.form-dialog .dialog-form .comment-field { display: grid; gap: var(--space-2); }
+.n-card.app-dialog.form-dialog .dialog-form .comment-field > .n-button { justify-self: start; font-size: .72rem; }
+.n-card.app-dialog.form-dialog .dialog-form .action-attachments > p { font-size: .7rem; }
+.n-card.app-dialog.form-dialog .n-card__footer { padding: var(--space-3) var(--dialog-inset); border-top: 0; background: var(--theme-surface, #fafbf8); }
+.n-card.app-dialog.form-dialog :is(.n-card__footer, .dialog-actions) { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: var(--space-2); width: 100%; }
+@media(max-width: 700px) {
+ .n-card.app-dialog.form-dialog .n-card__footer { padding: var(--space-3) var(--dialog-inset); }
+ .n-card.app-dialog.form-dialog .dialog-form :is(.metadata-grid, .event-form-grid, .asset-form-grid, .user-form-grid, .sensor-form-grid, .dialog-form-grid, .cycle-fields, .grid) { grid-template-columns: minmax(0, 1fr); }
+ .n-card.app-dialog.form-dialog .dialog-form .duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+}
+@media(max-width: 460px) { .n-card.app-dialog.form-dialog .dialog-form .duration-grid { grid-template-columns: minmax(0, 1fr); } }
+.n-card.app-dialog.form-dialog .dialog-form :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--theme-danger, #b34545); }
+
+.n-card.app-dialog.form-dialog .dialog-form fieldset > .n-button { justify-self: start; }
+
+/* Teleported module content uses the same compact surfaces as workspace pages.
+   Restrict this contract to secondary panels; record layouts keep their own grid. */
+.n-card.app-dialog.module-dialog .n-card { padding: 0; border: 0; box-shadow: none; background: transparent; }
+.n-card.app-dialog.module-dialog .n-card > .n-card-content { padding: 0; gap: var(--space-3); }
+.n-card.app-dialog.module-dialog .n-card .n-card-header__main { display: none; }
+.n-card.app-dialog.module-dialog .n-card .n-card-header__extra { font-size: .78rem; line-height: 1.5; color: var(--app-muted); }
+.n-card.app-dialog.module-dialog :is(.modal-panel, .panel, .asset-history, .event-details) { margin: 0; padding: 0; border: 0; background: transparent; min-width: 0; }
+.n-card.app-dialog.module-dialog :is(h3, h4) { margin: var(--space-3) 0 var(--space-1-5); font-size: .9rem; color: var(--app-text); }
+.n-card.app-dialog.module-dialog p { margin: var(--space-2) 0; font-size: .8rem; line-height: 1.55; overflow-wrap: anywhere; }
+.n-card.app-dialog.module-dialog :is(.filters, .picker-search, .locations-toolbar, .sensor-toolbar) { margin: var(--space-3) 0 var(--ui-content-gap); gap: var(--space-3); }
+.n-card.app-dialog.module-dialog :is(.filters, .locations-toolbar, .sensor-toolbar) { display: flex; flex-wrap: wrap; align-items: end; }
+.n-card.app-dialog.module-dialog :is(.filters > div, .field) { min-width: 0; }
+.n-card.app-dialog.module-dialog label { font-size: .76rem; }
+.n-card.app-dialog.module-dialog :is(.entity-list, .location-grid, .sensor-grid, .balances, .history, .event-revisions, .reference-picker ul) { margin: var(--space-3) 0; padding: 0; list-style: none; display: grid; gap: var(--space-3); }
+.n-card.app-dialog.module-dialog :is(.entity-list, .location-grid, .sensor-grid, .balances, .history, .event-revisions, .reference-picker ul) > li { min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--app-border); border-radius: .8rem; background: var(--app-subtle); overflow-wrap: anywhere; }
+.n-card.app-dialog.module-dialog :is(.heading, .picker-heading, .locations-pagination, .sensors-pagination, .assets-pagination, .events-pagination) { gap: var(--space-3); }
+.n-card.app-dialog.module-dialog :is(.table-scroll, figure) { max-width: 100%; margin: var(--space-3) 0; overflow-x: auto; }
+.n-card.app-dialog.module-dialog table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.n-card.app-dialog.module-dialog :is(th, td) { padding: var(--space-2) var(--space-3); text-align: start; border-bottom: 1px solid var(--app-border); }
+.n-card.app-dialog.module-dialog th { background: var(--app-subtle); font-weight: 600; }
+.n-card.app-dialog.module-dialog .import-button { margin-top: var(--ui-content-gap); }
+.n-card.app-dialog.module-dialog .entity-list input[type=checkbox] { width: 1rem; height: 1rem; flex: 0 0 auto; accent-color: var(--app-accent); }
+.n-card.app-dialog .reference-picker .n-card-header__main { display: none; }
+@media(max-width: 600px) {
+ .n-card.app-dialog.module-dialog :is(.location-grid, .sensor-grid) { grid-template-columns: minmax(0, 1fr); }
+ .n-card.app-dialog.module-dialog .filters > div { width: 100%; }
+ .n-card.app-dialog.module-dialog .reference-picker li { align-items: start; gap: var(--space-3); }
+}
+
+.n-card.app-dialog.module-dialog .comment-templates > h2 { display: none; }
+.n-card.app-dialog.module-dialog .template-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); margin: var(--space-3) 0 var(--ui-content-gap); }
+.n-card.app-dialog.module-dialog .template-toolbar label { flex: 1; min-width: 8rem; }
+.n-card.app-dialog.module-dialog .template-list { display: grid; gap: var(--space-3); margin: var(--space-3) 0; padding: 0; list-style: none; }
+.n-card.app-dialog.module-dialog .template-list > li { padding: var(--space-3) var(--space-4); border: 1px solid var(--app-border); border-radius: .8rem; background: var(--app-subtle); }
+.n-card.app-dialog.module-dialog .template-list pre { margin: var(--space-2) 0; padding: var(--space-3); border-radius: .5rem; font: inherit; font-size: .78rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--theme-surface, white); }
+
+/* Body spacing also covers loading, confirmation and preview dialogs without forms. */
+.n-card.app-dialog .dialog-body { display: flex; flex-direction: column; gap: var(--dialog-gap); min-width: 0; }
+.n-card.app-dialog .dialog-body > :is(p, .n-alert) { margin: 0; }
+.n-card.app-dialog .dialog-body > .n-button { align-self: flex-start; }
+.n-card.app-dialog .n-card-header__extra { align-self: flex-start; }
+.n-card.app-dialog .n-card__footer:empty { display: none; }
+.n-card.app-dialog.form-dialog .dialog-form :is(.form-section-heading, .permission-grants, .location-access) { grid-column: 1 / -1; }
+.n-card.app-dialog.form-dialog .dialog-form .user-access-section { grid-column: auto; display: grid; gap: var(--space-3); padding: 0; background: transparent; border: 0; border-radius: 0; }
+.n-card.app-dialog.form-dialog .dialog-form .dialog-section { display: grid; gap: var(--space-3); min-width: 0; }
+.n-card.app-dialog.form-dialog .dialog-form h4 svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+.n-card.app-dialog.form-dialog .dialog-form .form-section-heading { margin: var(--space-1) 0 0; }
+.n-card.app-dialog.form-dialog .dialog-form .dialog-wide { min-width: 0; }
+.n-card.app-dialog.form-dialog .dialog-form :is(.field, .context, .reference-select) { max-width: 100%; }
+.n-card.app-dialog.form-dialog .dialog-form .field > :is(input, select, textarea, .n-input, .app-tree-select) { width: 100%; }
+.n-card.app-dialog.form-dialog .dialog-form > .n-switch { margin-block: var(--space-2); }
+.n-card.app-dialog .dialog-form .icon-select { min-width: 0; }
+.n-card.app-dialog .dialog-form .icon-select > svg { flex-shrink: 0; }
+.n-card.app-dialog.module-dialog .dialog-body > :is(h3, h4) { margin: var(--space-1) 0 0; }
+.n-card.app-dialog.module-dialog .dialog-body > :is(.panel, .modal-panel) { display: grid; gap: var(--dialog-gap); }
+
+.n-card.app-dialog input[type="file"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; color: var(--theme-muted); font: inherit; font-size: .78rem; }
+.n-card.app-dialog input[type="file"]::file-selector-button { margin-inline-end: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--theme-border); border-radius: .55rem; background: var(--theme-subtle); color: var(--theme-text); font: inherit; cursor: pointer; }
+.n-card.app-dialog input[type="file"]:disabled::file-selector-button { opacity: .6; cursor: default; }
+
+/* Section rhythm is shared by forms and read-only records, without nested frames. */
+.n-card.app-dialog .dialog-body :is(h3, h4, legend):has(> svg) { display: flex; align-items: center; gap: var(--dialog-icon-gap); }
+.n-card.app-dialog .dialog-body :is(h3, h4, legend) > svg { display: block; width: 1rem; height: 1rem; flex: 0 0 auto; }
+.n-card.app-dialog .dialog-body :is(.record-summary > h4, .modal-panel > h4, .device-channel-heading, .expected-actions-heading) { margin: 0 0 var(--space-2); font-size: .82rem; font-weight: 650; line-height: 1.45; letter-spacing: normal; }
+.n-card.app-dialog.form-dialog .dialog-form .dialog-section { gap: var(--space-3); }
+.n-card.app-dialog.form-dialog .dialog-form fieldset > legend { display: flex; align-items: center; gap: var(--dialog-icon-gap); }
+.n-card.app-dialog.form-dialog .dialog-form .icon-select { gap: var(--dialog-icon-gap); }
+
+.n-card.app-dialog .dialog-body :is(dt, .field > label, .duration-input > label):has(> svg) { display: flex; align-items: center; gap: var(--dialog-icon-gap); }
+.n-card.app-dialog .dialog-body :is(dt, .field > label, .duration-input > label) > svg { display: block; width: .9rem; height: .9rem; flex: 0 0 auto; }
+
+/* Menus may extend beyond the card; only the content area scrolls/clips. */
+.n-card.app-dialog > .n-card-header { border-top-left-radius: inherit; border-top-right-radius: inherit; }
+.n-card.app-dialog > :is(.n-card__footer, .n-card-content:last-child) { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }

@@ -1,0 +1,13 @@
+{
+  "open": "QR code",
+  "title": "QR label",
+  "close": "Close QR label",
+  "image": "QR code for {name}",
+  "help": "Scanning opens this record. Sign-in and existing access permissions still apply.",
+  "addressHelp": "Use the address reachable by your phone before printing. A localhost address only works on this computer.",
+  "svg": "SVG",
+  "png": "PNG",
+  "print": "Print",
+  "error": "Unable to prepare this label. Please try again.",
+  "linkLabel": "Record address"
+}

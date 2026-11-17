@@ -1,0 +1,45 @@
+{
+  "title": "About",
+  "description": "Track plants, care and their environment.",
+  "installed": "Installed version",
+  "latest": "Latest release",
+  "updates": "Updates",
+  "checking": "Checking GitHub releases…",
+  "failed": "Unable to load application information. Try reloading.",
+  "checked": "Checked on {date}",
+  "release": "Release notes",
+  "prerelease": "Pre-release",
+  "cacheHelp": "GitHub results are cached for 12 hours. Pre-releases are included. Updates are installed manually.",
+  "status": {
+    "available": "Update available",
+    "current": "Up to date",
+    "noRelease": "No release published",
+    "inaccessible": "Repository unavailable",
+    "limited": "GitHub limit reached",
+    "unavailable": "Check unavailable",
+    "unknownVersion": "Unknown installed version"
+  },
+  "details": {
+    "available": "A newer version is available on GitHub. Review its release notes before updating.",
+    "current": "No newer published version was found.",
+    "noRelease": "The repository has no published versioned release yet.",
+    "inaccessible": "GitHub cannot access this repository. Check its visibility and availability.",
+    "limited": "GitHub is temporarily limiting requests. Try again later.",
+    "unavailable": "GitHub could not be reached or returned an unexpected response. Try again later.",
+    "unknownVersion": "A release was found, but the installed version could not be compared."
+  },
+  "categories": {
+    "interface": "Web interface",
+    "language": "Programming language",
+    "components": "Interface components",
+    "icons": "Interface icons",
+    "backend": "Application server",
+    "database": "Database and time series",
+    "cache": "Cache and queues",
+    "storage": "S3-compatible file storage (optional)",
+    "deployment": "Container deployment",
+    "build": "Build tooling",
+    "charts": "Charts"
+  },
+  "technologies": "Technologies"
+}

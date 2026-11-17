@@ -1,0 +1,120 @@
+{
+  "title": "Vue d’ensemble",
+  "description": "Plantes, matériels et stocks par site.",
+  "back": "Retour à l’accueil",
+  "refresh": "Actualiser la synthèse",
+  "generatedAt": "Actualisé le {date}",
+  "loading": "Chargement de la synthèse…",
+  "notRecorded": "Non enregistré",
+  "scopeHelp": "Tous vos sites accessibles · données enregistrées",
+  "groups": {
+    "locations": "Emplacements",
+    "assets": "Matériel",
+    "sensors": "Capteurs",
+    "alerts": "Alertes de surveillance",
+    "inventory": "Inventaire",
+    "collection": "Collecte Home Assistant",
+    "strains": "Variétés",
+    "sources": "Sources de mesures",
+    "records": "Fichiers et journal"
+  },
+  "metrics": {
+    "locations": {
+      "sites": "Sites",
+      "rooms": "Pièces",
+      "zones": "Zones"
+    },
+    "assets": {
+      "total": "Matériels déclarés",
+      "active": "Déclarés actifs",
+      "maintenance": "En maintenance",
+      "retired": "Retirés"
+    },
+    "sensors": {
+      "total": "Capteurs déclarés",
+      "enabled": "Capteurs activés",
+      "withReadings": "Avec des relevés enregistrés",
+      "withoutReadings": "Sans relevé enregistré",
+      "linked": "Liés à un fournisseur",
+      "unlinked": "Sans lien domotique"
+    },
+    "alerts": {
+      "active": "Épisodes actifs",
+      "unacknowledged": "À prendre en compte",
+      "critical": "Épisodes critiques actifs",
+      "warning": "Épisodes d’avertissement actifs",
+      "info": "Épisodes informatifs actifs",
+      "enabledRules": "Règles activées"
+    },
+    "inventory": {
+      "activeItems": "Articles non archivés",
+      "lowStockItems": "Articles au seuil ou en dessous"
+    },
+    "collection": {
+      "enabledLinks": "Liens activés",
+      "pausedLinks": "Liens en pause"
+    },
+    "strains": {
+      "active": "Variétés disponibles",
+      "archived": "Variétés archivées",
+      "inUse": "Dans les plantes actives"
+    }
+  },
+  "help": {
+    "locations": "Sites, pièces et zones de votre arborescence accessible.",
+    "assets": "États du matériel déclarés manuellement.",
+    "sensors": "Canaux désactivés et historique des relevés inclus.",
+    "alerts": "Alertes en cours. Prendre une alerte en compte ne la résout pas.",
+    "inventory": "Articles non archivés ; seuls les seuils configurés déterminent les stocks bas.",
+    "collection": "Affiche les dernières tentative et réussite enregistrées, liens en pause inclus. La connexion n’est pas vérifiée en direct. Une réussite passée ne garantit pas la disponibilité actuelle.",
+    "strains": "Catalogue partagé ; utilisation dans vos plantes actives accessibles."
+  },
+  "lastAttempt": "Dernière tentative enregistrée",
+  "lastSuccess": "Dernière réussite enregistrée",
+  "open": {
+    "locations": "Parcourir les emplacements",
+    "assets": "Parcourir le matériel",
+    "sensors": "Parcourir les capteurs",
+    "alerts": "Consulter les alertes",
+    "inventory": "Parcourir l’inventaire",
+    "measurements": "Ouvrir les mesures et sources",
+    "reports": "Ouvrir les rapports de mesures",
+    "plants": "Parcourir les plantes",
+    "catalog": "Parcourir les variétés"
+  },
+  "unavailable": "Indisponible",
+  "phases": "Répartition des plantes par stade",
+  "phaseCount": "{phase} : {count} plantes",
+  "attention": "À surveiller",
+  "plants": {
+    "active": "Plantes actives",
+    "planned": "À semer",
+    "due": "Plantes avec action due",
+    "harvest": "Récolte enregistrée",
+    "tracked": "{count} suivies · {archived} archivées",
+    "plannedHelp": "Exclues des plantes actives",
+    "dueHelp": "Chaque plante comptée une seule fois",
+    "harvested": "{count} plantes pesées · archives incluses",
+    "wateringDue": "Arrosage nécessaire",
+    "wateringHelp": "Une mesure utilisable d’humidité du sol prime sur le délai.",
+    "lifecycleDue": "Actions de cycle dues",
+    "lifecycleHelp": "La fin prévue de l’étape est atteinte. La maturation n’a pas d’échéance."
+  },
+  "providers": {
+    "homeAssistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "mqtt": "MQTT",
+    "http": "HTTP"
+  },
+  "openSource": "Ouvrir {provider}",
+  "sourceTotal": "Sources déclarées",
+  "sourceEnabled": "Déclarées activées",
+  "lastReceipt": "Dernière réception enregistrée",
+  "sourceHelp": "Dernières réceptions enregistrées, sources en pause incluses.",
+  "files": "Fichiers actifs",
+  "archivedFiles": "{count} fichiers archivés",
+  "journal": "Entrées du journal",
+  "recentEntries": "{count} sur les 7 derniers jours",
+  "scopedStock": "Les seuils de stock globaux ne sont pas disponibles avec des droits limités par emplacement.",
+  "stockHelp": "Articles non archivés avec un seuil configuré."
+}

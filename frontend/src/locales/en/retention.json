@@ -1,0 +1,54 @@
+{
+  "title": "Measurement retention",
+  "unlimited": "Unlimited retention",
+  "policyDays": "Keep {count} days",
+  "help": "Manage stored sensor measurements. Plant history and files are not affected.",
+  "purge": "Purge old data",
+  "configure": "Automatic retention",
+  "disable": "Keep everything",
+  "active": "A purge is queued or running. Counts refresh automatically.",
+  "history": "Recent purges",
+  "days": "Age in days",
+  "receiptGuard": "Only measurements whose observation and receipt are both older than this age are eligible.",
+  "cutoff": "Before",
+  "affected": "Eligible measurements",
+  "atLeast": "At least {count}",
+  "preview": "Preview",
+  "confirmManual": "This permanently deletes the eligible measurements before the displayed cutoff. A backup is required to recover them.",
+  "confirmPolicy": "This enables daily automatic deletion and starts a purge now. Deleted measurements can only be recovered from a backup.",
+  "preserved": "Plant events, alert snapshots, inventory and security history are preserved. Charts and new exports will use the remaining measurements.",
+  "confirmPurge": "Confirm purge",
+  "confirmEnable": "Enable and purge",
+  "cancel": "Stop purge",
+  "modes": {
+    "manual": "One-time purge",
+    "policy": "Automatic retention"
+  },
+  "statuses": {
+    "queued": "Queued",
+    "running": "Running",
+    "completed": "Completed",
+    "cancelled": "Stopped",
+    "failed": "Failed"
+  },
+  "columns": {
+    "createdAt": "Requested",
+    "mode": "Mode",
+    "cutoffAt": "Before",
+    "deletedCount": "Deleted",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "errors": {
+    "conflict": "Settings changed. Reload and preview again.",
+    "previewExpired": "This preview expired or belongs to another session. Preview again.",
+    "busy": "A purge is already pending. Wait or stop it first.",
+    "failed": "The purge could not be completed. Check the queue and reload.",
+    "authorization": "Authorization changed. The purge was stopped.",
+    "queueUnavailable": "Configure an asynchronous queue before starting a purge."
+  },
+  "policyHelp": "Automatically delete measurements older than the chosen number of days, every day. Enabling or changing this rule also starts a purge immediately.",
+  "manualHelp": "Delete old measurements once, after reviewing the preview. This does not change the automatic retention rule.",
+  "enable": "Configure",
+  "edit": "Edit rule"
+}

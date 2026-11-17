@@ -1,0 +1,44 @@
+/* Shared application composition over native Naive UI components. */
+.n-config-provider{min-height:inherit;color:var(--theme-text)}
+.n-button__content{gap:var(--ui-icon-gap);min-width:0;white-space:normal}.n-button__icon{flex-shrink:0}.n-button .button-icon{margin:0}
+.app-select-host{display:block;min-width:0;width:100%}.select-option-label,.folder-tree-label{display:inline-flex;align-items:center;gap:var(--ui-icon-gap);min-width:0}
+.n-input,.n-input-number,.n-base-selection{max-width:100%;min-width:0}.n-input{padding:0!important}.n-input__input-el,.n-input__textarea-el{border:0!important;border-radius:0!important;background:transparent!important;padding:0!important;box-shadow:none!important;font:inherit!important;color:inherit!important;}.n-input__textarea-el{height:auto}
+.n-card.app-dialog{display:flex;flex-direction:column;max-height:calc(100dvh - 2rem)}.n-card.app-dialog>.n-card-content{overflow:auto;min-height:0;flex:1}.n-card.app-dialog>.n-card-header,.n-card.app-dialog>.n-card__footer{flex-shrink:0}.n-card.app-dialog .n-card-header__main{min-width:0}
+.n-card.app-dialog>.n-card__footer{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:var(--ui-control-gap);padding:var(--ui-card-inset) var(--ui-panel-inset)}
+.app-dialog .dialog-close{display:inline-flex;align-items:center;justify-content:center;min-width:2.1rem}.dialog-close .n-button__content{display:flex;align-items:center;justify-content:center}
+.n-tabs .n-tabs-nav{min-width:0;max-width:100%}.n-tabs .n-tabs-tab__label{display:inline-flex;align-items:center;gap:var(--ui-icon-gap);min-width:0}.n-tab-pane{min-width:0}.button-tabs .n-tabs-bar{display:none}
+.n-alert{margin-block:var(--space-3)}.n-alert-body__content{line-height:1.55;padding-bottom:var(--space-1)}
+.collection-scroll{max-width:100%;overflow:auto}.collection-table{width:100%}.collection-table th,.collection-table td{vertical-align:top;overflow-wrap:anywhere}.collection-table .collection-column-actions{width:9rem}
+.notes-visual .ql-toolbar{border-color:var(--theme-border);background:var(--theme-subtle);border-radius:.6rem .6rem 0 0}.notes-visual .ql-container{border-color:var(--theme-border);background:var(--theme-surface);border-radius:0 0 .6rem .6rem;font:inherit}.notes-visual .ql-editor{min-height:12rem;line-height:1.65;color:var(--theme-text)}
+.notes-visual .ql-stroke{stroke:var(--theme-text)}.notes-visual .ql-fill{fill:var(--theme-text)}.notes-visual .ql-picker{color:var(--theme-text)}
+.upload-drop-target.n-upload-dragger{display:flex;flex-direction:column;align-items:center;gap:var(--space-2)}
+
+select.app-select-source{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;border:0!important;opacity:0;pointer-events:none;overflow:hidden}
+
+.card-heading-block{display:grid;gap:var(--space-2);width:100%;min-width:0}.card-subtitle{font-size:.78rem;font-weight:400;line-height:1.5;color:var(--theme-muted)}.card-subtitle p{margin:0}
+.collection-page-size{white-space:nowrap}.collection-page-size .app-select-host{width:5.5rem;min-width:5.5rem;flex:0 0 5.5rem}
+.site-selector .app-select-host{flex:1;min-width:0}.site-selector .n-base-selection{--n-height:calc(var(--app-control-height) - 2px)!important;background:transparent}.site-selector :is(.n-base-selection__border,.n-base-selection__state-border){display:none}.site-selector .n-base-selection-label{padding-inline-start:0;background:transparent!important}.site-selector .n-base-selection-label .n-base-selection-input{font-weight:650!important}
+
+.tree-filter{padding:var(--space-1-5);min-width:0}.tree-filter .n-input{width:100%}
+
+.n-base-selection .n-base-selection__border,.n-input .n-input__border,
+#workspace-content.workspace-pages .site-selector,.app-tree-select.n-tree-select{border-color:color-mix(in srgb,var(--theme-muted) 75%,var(--theme-surface))!important}
+.select-filter{padding:var(--space-1-5);min-width:0}.select-filter .n-input{width:100%}
+
+:is(.icon-select,.phase-select):has(> svg)>.app-select-host .n-base-selection-input{padding-inline-start:var(--space-8)}
+
+.n-base-select-menu .n-base-select-menu__header:has(>.select-filter),.n-tree-select-menu .n-tree-select-menu__header:has(>.tree-filter){padding:0}
+
+/* Shared height for single-line controls; textareas keep content-driven sizing. */
+.n-input:not(.n-input--textarea),.n-base-selection{--n-height:var(--app-control-height)!important}
+.n-input:not(.n-input--textarea) .n-input__input-el{line-height:var(--n-height)!important}
+
+.n-config-provider .n-tag { max-width: 100%; height: auto; min-height: var(--n-height); padding-block: var(--space-1); }
+.n-tag .n-tag__content { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
+.n-tag__content > svg { width: 1em; height: 1em; flex-shrink: 0; }
+
+/* A tag inside an interactive control follows that control's pointer/disabled state. */
+:is(button, a, [role="button"]) .n-tag { cursor: inherit; }
+:is(button, a, [role="button"]).n-tag:not(:disabled):not([aria-disabled="true"]) { cursor: pointer; }
+:is(a, button).record-badge, :is(a, button).record-badge:hover,
+a.n-tag, a.n-tag:hover { text-decoration: none; }

@@ -1,0 +1,19 @@
+{
+  "profile": "Profile",
+  "edit": "Edit my profile",
+  "displayName": "Display name",
+  "email": "Email address",
+  "save": "Save changes",
+  "cancel": "Cancel",
+  "saved": "Your profile has been updated.",
+  "preferences": "Personal preferences",
+  "preferencesHelp": "Language and appearance are saved in this browser.",
+  "access": "Access",
+  "accessHelp": "Your permissions are managed by an administrator.",
+  "allLocations": "All locations",
+  "locations": "Allowed locations",
+  "linked": "{provider} linked",
+  "unlinked": "{provider} not linked",
+  "emailHelp": "Your current address remains active. Confirm the new address using the link sent to it, valid for one hour.",
+  "providerHelp": "This updates your application account. Your {provider} identity stays linked and is managed separately."
+}

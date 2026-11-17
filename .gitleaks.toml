@@ -1,0 +1,17 @@
+[extend]
+useDefault = true
+
+# Fixed, non-production fixtures only; both the path and exact value must match.
+[[allowlists]]
+description = "Fictional VAPID key for the isolated browser-test environment"
+condition = "AND"
+paths = ['''(^|/)scripts/test-environment\.py$''']
+regexTarget = "secret"
+regexes = ['''^llHkOq7PBH7IQNCDP0M_8X01Cnyl_SKbd8Rleq95Ruo$''']
+
+[[allowlists]]
+description = "Fictional instance fingerprint used by source-diagnostic tests"
+condition = "AND"
+paths = ['''(^|/)frontend/tests/e2e/source-diagnostics\.spec\.ts$''']
+regexTarget = "secret"
+regexes = ['''^e2e-private-diagnostics-instance$''']

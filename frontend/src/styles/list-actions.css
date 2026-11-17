@@ -1,0 +1,44 @@
+/* Keep icon actions square even inside legacy mobile table/card button layouts. */
+.n-button.list-action-button,
+#workspace-content.workspace-pages .n-button.list-action-button,
+.n-card.app-dialog .n-button.list-action-button {
+ width: 2.15rem; height: 2.15rem; min-width: 2.15rem; min-height: 2.15rem;
+ padding: 0; gap: 0; flex: 0 0 auto; border-radius: .55rem;
+}
+.n-button.list-action-button svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+#workspace-content.workspace-pages :is(.actions, .asset-actions, .event-actions, .location-actions, .plant-heading, .template-actions):has(> .list-action-button) { justify-content: flex-start; gap: var(--space-1-5); }
+@media(max-width: 700px) {
+ .n-button.list-action-button,
+ #workspace-content.workspace-pages .n-button.list-action-button,
+ .n-card.app-dialog .n-button.list-action-button { width: 2.5rem; height: 2.5rem; min-width: 2.5rem; min-height: 2.5rem; }
+}
+/* Share semantic colors between icon actions, record actions and confirmations. */
+[data-action-icon] { --action-tone: var(--theme-focus); }
+[data-action-icon="water"] { --action-tone: var(--theme-action-water); }
+[data-action-icon="seed"], [data-action-icon="sprout"], [data-action-icon="leaf"] { --action-tone: var(--theme-action-plant); }
+[data-action-icon="pot"], [data-action-icon="harvest"] { --action-tone: var(--theme-action-harvest); }
+[data-action-icon="scissors"] { --action-tone: var(--theme-action-maintenance); }
+[data-action-icon="edit"] { --action-tone: var(--theme-action-edit); }
+[data-action-icon="archive"], [data-action-icon="hourglass"], [data-action-icon="image"] { --action-tone: var(--theme-action-media); }
+[data-action-icon="eye"], [data-action-icon="externalLink"] { --action-tone: var(--theme-action-link); }
+[data-action-icon="trash"], [data-action-icon="unlink"], .n-button--error-type { --action-tone: var(--theme-danger); }
+.n-button:is([data-action-icon], .n-button--error-type),
+#workspace-content.workspace-pages .n-button:is([data-action-icon], .n-button--error-type),
+.n-card.app-dialog .n-button:is([data-action-icon], .n-button--error-type) {
+ color: var(--action-tone);
+ background: color-mix(in srgb, var(--action-tone) 8%, var(--theme-surface, #fff));
+ border: 1px solid color-mix(in srgb, var(--action-tone) 35%, var(--theme-border, #e0e7db));
+ border-radius: .55rem;
+ transition: background-color .14s, border-color .14s, color .14s;
+}
+.n-button:is([data-action-icon], .n-button--error-type):enabled:is(:hover, :focus-visible),
+#workspace-content.workspace-pages .n-button:is([data-action-icon], .n-button--error-type):enabled:is(:hover, :focus-visible),
+.n-card.app-dialog .n-button:is([data-action-icon], .n-button--error-type):enabled:is(:hover, :focus-visible),
+#workspace-content.workspace-pages .n-button.select-all-button:is([aria-pressed="true"], [aria-pressed="mixed"]),
+.n-card.app-dialog .n-button.select-all-button:is([aria-pressed="true"], [aria-pressed="mixed"]) {
+ color: var(--action-tone); border-color: var(--action-tone);
+ background: color-mix(in srgb, var(--action-tone) 16%, var(--theme-surface, #fff));
+ filter: none;
+}
+.n-button:is([data-action-icon], .n-button--error-type):enabled:focus-visible { outline: 2px solid var(--action-tone); outline-offset: 2px; }
+@media(prefers-reduced-motion: reduce) { .n-button:is([data-action-icon], .n-button--error-type) { transition: none; } }

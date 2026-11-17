@@ -1,0 +1,13 @@
+{
+  "title": "Affectation à la mesure",
+  "unknown": "Affectation inconnue",
+  "legacy": "Origine historique incomplète",
+  "recorded": "Affectation enregistrée",
+  "sources": {
+    "http": "HTTP",
+    "mqtt": "MQTT",
+    "home_assistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "bluetooth": "Bluetooth"
+  }
+}

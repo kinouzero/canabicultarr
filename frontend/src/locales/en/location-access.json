@@ -1,0 +1,12 @@
+{
+  "title": "Location access",
+  "all": "Access to the entire installation",
+  "help": "Access to a site includes its rooms and zones; access to a room includes its zones. Module permissions still control allowed actions. No selection means no location access.",
+  "add": "Add a location",
+  "remove": "Remove {name}",
+  "none": "No location selected.",
+  "limited": "Your access is limited to selected locations.",
+  "errors": {
+    "invalidSelection": "Choose existing sites, rooms or zones."
+  }
+}

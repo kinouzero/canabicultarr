@@ -1,0 +1,45 @@
+{
+  "title": "À propos",
+  "description": "Suivi des plantes, des soins et de leur environnement.",
+  "installed": "Version installée",
+  "latest": "Dernière release",
+  "updates": "Mises à jour",
+  "checking": "Vérification des releases GitHub…",
+  "failed": "Impossible de charger les informations de l’application. Rechargez la page.",
+  "checked": "Vérifié le {date}",
+  "release": "Notes de version",
+  "prerelease": "Préversion",
+  "cacheHelp": "Les résultats GitHub sont conservés 12 heures. Les préversions sont incluses. Les mises à jour s’installent manuellement.",
+  "status": {
+    "available": "Mise à jour disponible",
+    "current": "À jour",
+    "noRelease": "Aucune release publiée",
+    "inaccessible": "Dépôt inaccessible",
+    "limited": "Limite GitHub atteinte",
+    "unavailable": "Vérification indisponible",
+    "unknownVersion": "Version installée inconnue"
+  },
+  "details": {
+    "available": "Une version plus récente est disponible sur GitHub. Consultez ses notes avant de mettre à jour.",
+    "current": "Aucune version publiée plus récente n’a été trouvée.",
+    "noRelease": "Le dépôt ne contient pas encore de release versionnée publiée.",
+    "inaccessible": "GitHub ne permet pas d’accéder au dépôt. Vérifiez sa visibilité et sa disponibilité.",
+    "limited": "GitHub limite temporairement les requêtes. Réessayez plus tard.",
+    "unavailable": "GitHub est injoignable ou a renvoyé une réponse inattendue. Réessayez plus tard.",
+    "unknownVersion": "Une release a été trouvée, mais la version installée ne peut pas être comparée."
+  },
+  "categories": {
+    "interface": "Interface web",
+    "language": "Langage de programmation",
+    "components": "Composants d’interface",
+    "icons": "Icônes de l’interface",
+    "backend": "Serveur applicatif",
+    "database": "Base de données et séries temporelles",
+    "cache": "Cache et files d’attente",
+    "storage": "Stockage S3 des fichiers (facultatif)",
+    "deployment": "Déploiement en conteneurs",
+    "build": "Outils de compilation",
+    "charts": "Graphiques"
+  },
+  "technologies": "Technologies"
+}

@@ -1,0 +1,7 @@
+{
+  "unknown": "Unknown quality",
+  "good": "Good quality",
+  "suspect": "Suspect",
+  "invalid": "Invalid",
+  "help": "Quality is separate from freshness. Unknown is unverified but usable; suspect and invalid values are excluded from charts, summaries, alerts and watering decisions."
+}

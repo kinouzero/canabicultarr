@@ -1,0 +1,27 @@
+{
+  "choose": "Choose files",
+  "limit": "10 MiB per file",
+  "preview": "Preview of {name}",
+  "unknownType": "File",
+  "remove": "Remove {name}",
+  "tooLarge": "The file exceeds 10 MiB.",
+  "invalidType": "This file format is not supported.",
+  "tooMany": "Select at most {count} files.",
+  "confirm": "Upload",
+  "photoTitle": "Manage photos",
+  "failed": "Upload failed. Check the error and try again.",
+  "states": {
+    "pending": "Ready to upload",
+    "uploading": "Uploading…",
+    "done": "Uploaded",
+    "error": "Upload failed"
+  },
+  "pendingHelp": "Upload the selected files before saving this action.",
+  "dropTitle": "Add your files",
+  "dropHint": "Drag and drop or click anywhere in this area.",
+  "mobileHint": "Tap to choose a photo or file from your device.",
+  "importTab": "Import",
+  "libraryTab": "Library",
+  "previewFailed": "Preview unavailable. You can still upload this file.",
+  "closePreview": "Close preview"
+}

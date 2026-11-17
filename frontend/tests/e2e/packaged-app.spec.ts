@@ -1,0 +1,41 @@
+import { isolatedCompose } from './docker-fixture';
+import { revealTabbedControl } from './navigation';
+import { activationLink } from './activation-fixture';
+import { test, expect } from '../coverage/fixture';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+test.skip(process.env.APP_BUILD_TARGET !== 'runtime', 'Run through scripts/test-container.sh');
+
+test('packaged app serves Vue and Laravel with persistent same-origin authentication', async ({ page }) => {
+ const projectRoot = fileURLToPath(new URL('../../..', import.meta.url));
+ const token = execFileSync('docker', [...isolatedCompose(), 'exec', '-T', 'app', 'php', 'artisan', 'app:setup-token', '--raw', '--no-ansi'], { cwd: projectRoot, env: { ...process.env, DB_PASSWORD: 'ci-e2e-password' }, encoding: 'utf8' }).trim();
+ const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+ await expect((await page.request.get('/up'))).toBeOK();
+ expect((await page.request.get('/.env')).status()).toBe(403);
+ expect((await page.request.get('/index.php')).status()).toBe(404);
+ expect((await page.request.get('/assets/missing.js')).status()).toBe(404);
+ const unknown = await page.request.get('/api/v1/nonexistent', { headers: { Accept: 'application/json' } });
+ expect(unknown.status()).toBe(404); expect(unknown.headers()['content-type']).toContain('application/json');
+ const setup = { token, name: 'Packaged administrator', email: 'packaged@example.test', password: 'Fictional container password 123!', password_confirmation: 'Fictional container password 123!' };
+ expect((await page.request.post('/api/v1/setup', { data: setup })).status()).toBe(419);
+ await page.request.get('/api/v1/auth/csrf');
+ const csrf = (await page.context().cookies()).find(cookie => cookie.name === 'XSRF-TOKEN')!;
+ const created = await page.request.post('/api/v1/setup', { data: setup, headers: { 'X-XSRF-TOKEN': decodeURIComponent(csrf.value) } });
+ expect(created.ok(), await created.text()).toBe(true);
+ expect((await page.request.get('/api/v1/auth/user')).status()).toBe(401);
+ await page.goto(activationLink());
+ await (await revealTabbedControl(page.locator('#activation-email'))).fill('packaged@example.test');
+ await page.getByRole('button', { name: /^(Activate account|Activer le compte)$/ }).click();
+ await (await revealTabbedControl(page.locator('#login-email'))).fill('packaged@example.test');
+ await (await revealTabbedControl(page.locator('#login-password'))).fill(setup.password);
+ await page.getByRole('button', { name: /^(Sign in|Se connecter)$/ }).click();
+ await expect(page.getByTestId('nav-home')).toBeAttached();
+ await page.reload();
+ await expect(page.getByTestId('nav-home')).toBeAttached();
+ const account = await page.request.get('/api/v1/auth/user');
+ expect((await account.json()).data.email).toBe('packaged@example.test');
+ const html = await (await page.request.get('/')).text();
+ expect(html).toContain('/assets/'); expect(html).not.toContain('/@vite/client');
+ expect(errors).toEqual([]);
+});

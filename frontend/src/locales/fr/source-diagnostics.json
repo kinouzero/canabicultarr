@@ -1,0 +1,63 @@
+{
+  "manage": "Diagnostic des sources",
+  "title": "Diagnostic des sources",
+  "description": "État et activité de la collecte.",
+  "back": "Retour à l’accueil",
+  "refresh": "Actualiser le diagnostic",
+  "loading": "Chargement du diagnostic des sources…",
+  "summary": "Toutes les sources enregistrées",
+  "total": "Total des sources",
+  "homeAssistant": "Home Assistant",
+  "http": "HTTP",
+  "configuration": "Configuration locale",
+  "readingSummary": "Relevés des sources activées",
+  "summaryHelp": "Les compteurs couvrent tous vos lieux accessibles, quels que soient les filtres. Les relevés concernent les sources et capteurs activés, le matériel en service et les configurations HTTP/MQTT valides.",
+  "freshnessHelp": "Un relevé est récent pendant au moins 120 secondes, ou deux fois l’intervalle attendu si ce délai est plus long. Sans intervalle, son ancienneté n’est pas évaluée. Cela ne confirme pas que l’appareil ou le service est en ligne.",
+  "asOf": "Ancienneté évaluée à {date}",
+  "search": "Nom du capteur ou de l’appareil",
+  "kind": "Type de source",
+  "state": "Configuration",
+  "freshness": "Ancienneté du relevé",
+  "all": "Tous",
+  "filter": "Appliquer les filtres",
+  "empty": "Aucune source trouvée. Les capteurs manuels sans liaison de données ne sont pas affichés.",
+  "results": "Sources correspondantes : {count}",
+  "observed": "Date du dernier relevé",
+  "received": "Réception de ce relevé",
+  "attempt": "Dernière tentative de collecte enregistrée",
+  "success": "Dernier succès de collecte enregistré",
+  "accepted": "Dernier relevé accepté",
+  "activityHelp": "La dernière réception et le dernier relevé peuvent concerner des données différentes. Des relevés anciens ou renvoyés ne confirment pas l’activité actuelle.",
+  "lastError": "Dernière erreur de collecte enregistrée",
+  "unknownError": "Une erreur enregistrée n’est pas reconnue. Consultez les réglages de la source pour poursuivre le diagnostic.",
+  "credentialInvalid": "Le jeton HTTP doit être renouvelé.",
+  "history": "Consulter les relevés de {name}",
+  "never": "Non enregistré",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "page": "Page {current} sur {total}",
+  "pagination": "Pagination du diagnostic des sources",
+  "kinds": {
+    "home_assistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "http": "HTTP",
+    "mqtt": "MQTT"
+  },
+  "states": {
+    "enabled": "Activée",
+    "paused": "En pause",
+    "sensor_disabled": "Capteur désactivé",
+    "device_retired": "Appareil retiré",
+    "credential_invalid": "Jeton à renouveler",
+    "source_unavailable": "Configuration du broker indisponible"
+  },
+  "freshnesses": {
+    "fresh": "Relevé récent",
+    "stale": "Relevé ancien",
+    "missing": "Aucun relevé",
+    "unknown": "Intervalle non configuré"
+  },
+  "validation": {
+    "filtersInvalid": "Vérifiez les filtres et choisissez une page valide."
+  }
+}

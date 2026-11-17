@@ -1,0 +1,96 @@
+name: canabicultarr
+
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/kinouzero/canabicultarr:0.1.0}
+    restart: unless-stopped
+    env_file:
+      - ${APP_ENV_FILE:-./.env}
+    # All application/connection settings come from the shared .env.
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-8420}}
+      APP_DEV_SERVER: "false"
+      # Bluetooth is configured through .env, not an additional Compose file.
+      # Linux: BLUETOOTH_ENABLED=true, BLUETOOTH_TRANSPORT=bluez,
+      # BLUETOOTH_ADAPTER=hci0 and DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket.
+      # Mac/Windows: BLUETOOTH_ENABLED=true, BLUETOOTH_TRANSPORT=relay,
+      # with the native relay URL/token configured through .env or Settings.
+    ports:
+      - "${APP_PORT:-8420}:8420"
+    volumes:
+      - backend_storage:/var/www/html/storage
+      # Linux BlueZ: uncomment this bind mount and enable BLUETOOTH_* in .env.
+      # - type: bind
+      #   source: /run/dbus/system_bus_socket
+      #   target: /run/dbus/system_bus_socket
+      #   read_only: true
+      #   bind:
+      #     create_host_path: false
+    stop_grace_period: 80s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    restart: unless-stopped
+    image: timescale/timescaledb:2.31.0-pg18
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-canabicultarr}
+      POSTGRES_USER: ${DB_USERNAME:-canabicultarr}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - postgres18_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:8.4.4-alpine}
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis_data:/data
+
+  rustfs:
+    image: rustfs/rustfs:1.0.4
+    profiles: [storage]
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID:-}
+      RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOGGER_LEVEL: warn
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        test -n "$$RUSTFS_ACCESS_KEY" && test -n "$$RUSTFS_SECRET_KEY" || {
+          echo "Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env." >&2
+          exit 1
+        }
+        exec /entrypoint.sh /data
+    ports:
+      - "127.0.0.1:${S3_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  postgres18_data:
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-${COMPOSE_PROJECT_NAME}_redis_data}
+  backend_storage:
+  rustfs_data:

@@ -1,0 +1,120 @@
+{
+  "title": "Overview",
+  "description": "Plants, hardware and stock by site.",
+  "back": "Back to home",
+  "refresh": "Refresh overview",
+  "generatedAt": "Updated {date}",
+  "loading": "Loading overview…",
+  "notRecorded": "Not recorded",
+  "scopeHelp": "All accessible sites · saved data",
+  "groups": {
+    "locations": "Locations",
+    "assets": "Hardware",
+    "sensors": "Sensors",
+    "alerts": "Monitoring alerts",
+    "inventory": "Inventory",
+    "collection": "Home Assistant collection",
+    "strains": "Strains",
+    "sources": "Measurement sources",
+    "records": "Files and journal"
+  },
+  "metrics": {
+    "locations": {
+      "sites": "Sites",
+      "rooms": "Rooms",
+      "zones": "Zones"
+    },
+    "assets": {
+      "total": "Registered assets",
+      "active": "Declared active",
+      "maintenance": "In maintenance",
+      "retired": "Retired"
+    },
+    "sensors": {
+      "total": "Registered sensors",
+      "enabled": "Enabled sensors",
+      "withReadings": "With recorded readings",
+      "withoutReadings": "Without recorded readings",
+      "linked": "Linked to a provider",
+      "unlinked": "Without a provider link"
+    },
+    "alerts": {
+      "active": "Active episodes",
+      "unacknowledged": "Awaiting review",
+      "critical": "Critical active episodes",
+      "warning": "Warning active episodes",
+      "info": "Informational active episodes",
+      "enabledRules": "Enabled rules"
+    },
+    "inventory": {
+      "activeItems": "Unarchived items",
+      "lowStockItems": "Items at or below threshold"
+    },
+    "collection": {
+      "enabledLinks": "Enabled links",
+      "pausedLinks": "Paused links"
+    },
+    "strains": {
+      "active": "Available strains",
+      "archived": "Archived strains",
+      "inUse": "In active plants"
+    }
+  },
+  "help": {
+    "locations": "Sites, rooms and zones within your accessible location tree.",
+    "assets": "Manually declared hardware states.",
+    "sensors": "Includes disabled channels and recorded reading history.",
+    "alerts": "Current alerts. Acknowledging an alert does not resolve it.",
+    "inventory": "Unarchived items; only configured thresholds contribute to low stock.",
+    "collection": "Shows the latest saved attempt and success, including paused links. No live connection check is made. A past success does not confirm current availability.",
+    "strains": "Shared catalog; usage covers your accessible active plants."
+  },
+  "lastAttempt": "Latest recorded attempt",
+  "lastSuccess": "Latest recorded success",
+  "open": {
+    "locations": "Browse locations",
+    "assets": "Browse hardware",
+    "sensors": "Browse sensors",
+    "alerts": "Review monitoring alerts",
+    "inventory": "Browse inventory",
+    "measurements": "Open measurements and sources",
+    "reports": "Open measurement reports",
+    "plants": "Browse plants",
+    "catalog": "Browse strains"
+  },
+  "unavailable": "Unavailable",
+  "phases": "Plants by stage",
+  "phaseCount": "{phase}: {count} plants",
+  "attention": "Needs attention",
+  "plants": {
+    "active": "Active plants",
+    "planned": "Awaiting sowing",
+    "due": "Plants needing action",
+    "harvest": "Recorded harvest",
+    "tracked": "{count} tracked · {archived} archived",
+    "plannedHelp": "Not included in active plants",
+    "dueHelp": "Each plant counted once",
+    "harvested": "{count} weighed plants · includes archives",
+    "wateringDue": "Watering needed",
+    "wateringHelp": "A usable soil moisture reading takes priority over elapsed time.",
+    "lifecycleDue": "Stage actions due",
+    "lifecycleHelp": "The planned stage end has been reached. Maturation has no deadline."
+  },
+  "providers": {
+    "homeAssistant": "Home Assistant",
+    "homebridge": "Homebridge",
+    "mqtt": "MQTT",
+    "http": "HTTP"
+  },
+  "openSource": "Open {provider}",
+  "sourceTotal": "Registered sources",
+  "sourceEnabled": "Declared enabled",
+  "lastReceipt": "Latest recorded receipt",
+  "sourceHelp": "Latest stored receipts, including paused sources.",
+  "files": "Active files",
+  "archivedFiles": "{count} archived files",
+  "journal": "Journal entries",
+  "recentEntries": "{count} in the last 7 days",
+  "scopedStock": "Global stock thresholds are unavailable with location-restricted access.",
+  "stockHelp": "Unarchived items with a configured threshold."
+}

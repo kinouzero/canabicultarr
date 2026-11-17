@@ -1,0 +1,31 @@
+/* Account tabs share the same content rhythm as settings. */
+.profile-workspace .workspace-header { margin-bottom: var(--ui-content-gap); }
+.profile-workspace .workspace-header .workspace-intro { margin: 0; }
+.profile-workspace #workspace-content { padding-top: var(--space-1); }
+.profile-workspace #workspace-content .account-section { min-width: 0; }
+.profile-workspace #workspace-content .account-section h3 { display: flex; align-items: center; gap: var(--ui-icon-gap); margin: 0 0 var(--space-3); font-size: .9rem; }
+.profile-workspace #workspace-content .account-section h3 svg { width: 1rem; height: 1rem; color: var(--theme-muted); }
+.profile-workspace #workspace-content .section-help { margin: 0 0 var(--ui-content-gap); color: var(--theme-muted); font-size: .78rem; line-height: 1.5; }
+.profile-workspace #workspace-content :is(.account-grid,.security-actions,.notification-columns) { gap: var(--ui-grid-gap); }
+.profile-workspace #workspace-content .profile-identity { border: 0; padding: var(--space-4); border-radius: .75rem; background: var(--theme-subtle); }
+.profile-workspace #workspace-content .profile-name h3 { font-size: 1.1rem; margin-bottom: var(--space-2); }
+.profile-workspace #workspace-content .profile-email { display: flex; align-items: center; gap: var(--ui-icon-gap); overflow-wrap: anywhere; }
+.profile-workspace #workspace-content .profile-email svg { width: .9rem; height: .9rem; flex-shrink: 0; }
+.profile-workspace #workspace-content .profile-email span { min-width: 0; }
+.profile-workspace #workspace-content .profile-tags { margin-top: var(--space-3); }
+.profile-workspace #workspace-content .preferences-grid { grid-template-columns: 1fr; gap: var(--space-3); margin-top: 0; }
+.profile-workspace #workspace-content .preferences-grid select { min-height: 2.5rem; }
+.profile-workspace #workspace-content .profile-preferences > small { display: block; margin-top: var(--space-3); }
+.profile-workspace #workspace-content .profile-access dl { margin: 0 0 var(--ui-content-gap); }
+.profile-workspace #workspace-content .profile-access dt { font-size: .75rem; }
+.profile-workspace #workspace-content .profile-access dd { line-height: 1.5; }
+.profile-workspace #workspace-content .security-summary { padding-bottom: 0; border: 0; }
+.profile-workspace #workspace-content .security-actions .account-section { gap: var(--space-2); }
+.profile-workspace .workspace-header .list-action-button { flex: 0 0 2.5rem; width: 2.5rem; height: 2.5rem; min-width: 2.5rem; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: .55rem; }
+@media(max-width:800px) { .profile-workspace #workspace-content :is(.account-grid,.security-actions,.notification-columns) { grid-template-columns: 1fr; } }
+@media(max-width:500px) { .profile-workspace #workspace-content .profile-identity { align-items: flex-start; gap: var(--space-3); padding: var(--space-3); } }
+
+.profile-workspace #workspace-content .account-tab-content { min-width: 0; max-width: 42rem; }
+
+.profile-workspace #workspace-content .account-profile > .account-grid { display: block; max-width: 40rem; }
+.profile-workspace #workspace-content .account-profile > .account-grid:empty { display: none; }

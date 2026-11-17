@@ -1,0 +1,36 @@
+# Development overrides; combine with compose.yaml.
+# Inherits the production service, volumes and optional Bluetooth bind mount.
+# Configure BlueZ on Linux or the native relay on Mac/Windows as documented in compose.yaml.
+services:
+  app:
+    image: canabicultarr-app-dev
+    build:
+      context: .
+      dockerfile: infrastructure/app/Dockerfile
+      target: development
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_DEV_SERVER: "true"
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /var/www/html
+          initial_sync: true
+          ignore: [vendor/, storage/, bootstrap/cache/, .env, .env.*, composer.json, composer.lock]
+        - action: sync
+          path: ./frontend
+          target: /app
+          initial_sync: true
+          ignore: [node_modules/, dist/, .env*, test-results/, test-results-pwa/, playwright-report/, package.json, package-lock.json]
+        - action: rebuild
+          path: ./backend/composer.json
+        - action: rebuild
+          path: ./backend/composer.lock
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+        - action: rebuild
+          path: ./infrastructure/app

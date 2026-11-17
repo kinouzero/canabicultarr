@@ -1,0 +1,53 @@
+{
+  "title": "Event types",
+  "add": "Create an event type",
+  "edit": "Edit the event type",
+  "name": "Name",
+  "icon": "Icon",
+  "contexts": "Allowed contexts",
+  "contextHelp": "Every type uses the journal title, text, importance, date and context fields.",
+  "allowed": "Allowed contexts: {contexts}",
+  "system": "System type · protected",
+  "systemHelp": "System types are protected. Custom types can be archived while preserving existing entries and revisions.",
+  "archived": "Archived",
+  "active": "Active",
+  "state": "State",
+  "all": "All",
+  "search": "Search",
+  "empty": "No custom event types.",
+  "saved": "Event type saved.",
+  "contextNames": {
+    "none": "No context",
+    "site": "Site",
+    "room": "Room",
+    "zone": "Zone",
+    "asset": "Hardware",
+    "sensor": "Channel"
+  },
+  "icons": {
+    "journal": "Journal",
+    "eye": "Observation",
+    "scissors": "Maintenance",
+    "water": "Watering",
+    "warning": "Incident",
+    "message": "Note",
+    "pot": "Pot",
+    "leaf": "Plant",
+    "info": "Information"
+  },
+  "errors": {
+    "conflict": "This type changed. Reload before saving.",
+    "nameTaken": "This name is already used."
+  },
+  "validation": {
+    "name": "Enter a name of up to 80 characters.",
+    "icon": "Choose an available icon.",
+    "contexts": "Choose at least one allowed context.",
+    "state": "Choose a valid state.",
+    "version": "Reload this type before saving.",
+    "type": "Choose an active event type.",
+    "scope": "This context is not allowed for the event type."
+  },
+  "systemTitle": "Built-in types",
+  "customTitle": "Custom types"
+}

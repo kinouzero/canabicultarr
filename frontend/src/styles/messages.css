@@ -1,0 +1,9 @@
+/* Shared spacing for page feedback, public forms and teleported dialogs. */
+.n-alert { margin-block: var(--space-3) var(--ui-content-gap); border-radius: .65rem; }
+.n-alert-body { align-items: flex-start; gap: var(--ui-control-gap); padding: var(--ui-card-inset); }
+.n-alert-body__content { min-width: 0; line-height: 1.55; overflow-wrap: anywhere; }
+.n-alert__close { flex-shrink: 0; }
+
+/* Transparent stack space must not block the page beneath it. */
+.feedback-stack { pointer-events: none; }
+.feedback-stack .n-notification { pointer-events: auto; }

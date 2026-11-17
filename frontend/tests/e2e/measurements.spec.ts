@@ -1,0 +1,78 @@
+import { isolatedCompose } from './docker-fixture';
+import { revealTabbedControl } from './navigation';
+import { openModule } from './navigation';
+import { test, expect } from '../coverage/fixture';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+test('Home Assistant entity selection creates real devices and sensors while manual assets stay independent', async ({ page, browser }) => {
+ const projectRoot = fileURLToPath(new URL('../../..', import.meta.url));
+ const compose = [...isolatedCompose(), 'exec'];
+ const options = { cwd: projectRoot, env: { ...process.env, DB_PASSWORD: 'ci-e2e-password' }, stdio: 'pipe' as const };
+ const fixture = String.raw`require 'vendor/autoload.php'; $app = require 'bootstrap/app.php'; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+ if (!app()->environment('testing') || config('database.default') !== 'sqlite' || DB::connection()->getDatabaseName() !== '/var/www/html/storage/e2e.sqlite') throw new RuntimeException('Isolated E2E database required.');
+ App\Models\User::factory()->create(['name'=>'Measurement Administrator','email'=>'measurements-admin@example.test','password'=>'A measurement test password 123!','permission_role_ids'=>[Database\Seeders\AccessProfileSeeder::defaultProfile('administrator')->id]]);
+ App\Models\User::factory()->create(['name'=>'Measurement Member','email'=>'measurements-member@example.test','password'=>'A measurement test password 123!','permission_role_ids'=>[Database\Seeders\AccessProfileSeeder::defaultProfile()->id]]);`;
+ execFileSync('docker', [...compose, '-T', 'app', 'php', '-r', fixture], options);
+ execFileSync('docker', [...compose, '-d', 'app', 'php', '-S', '127.0.0.1:8124', 'tests/Fixtures/home-assistant-router.php'], options);
+ await page.goto('/'); await (await revealTabbedControl(page.locator('#language'))).selectOption('fr');
+ await (await revealTabbedControl(page.locator('#login-email'))).fill('measurements-admin@example.test'); await (await revealTabbedControl(page.locator('#login-password'))).fill('A measurement test password 123!'); await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
+ await openModule(page, 'ha');
+ await page.getByRole('button', { name: 'Vérifier la connexion', exact: true }).click();
+ await expect(page.getByText('Home Assistant est joignable.', { exact: true })).toBeVisible();
+ await page.getByRole('button', { name: 'Parcourir les appareils Home Assistant', exact: true }).click();
+ await page.getByRole('checkbox', { name: 'Sélectionner E2E Environmental Device', exact: true }).check();
+ await page.getByRole('button', { name: 'Importer les appareils sélectionnés', exact: true }).click();
+ await expect(page.getByText('Matériels créés : 1 · canaux : 2 · déjà importées : 0.', { exact: true })).toBeVisible();
+ await expect(page.getByRole('checkbox', { name: 'Sélectionner E2E Environmental Device', exact: true })).toBeDisabled();
+ await page.getByRole('button', { name: 'Fermer le formulaire', exact: true }).click();
+ const links = (await (await page.request.get('/api/v1/integrations/home-assistant/links')).json()).data;
+ const temperature = links.find((link: { entityId: string }) => link.entityId === 'sensor.e2e_temperature');
+ expect(links).toHaveLength(2); expect(new Set(links.map((link: { sensor: { device: { id: string } } }) => link.sensor.device.id)).size).toBe(1);
+ async function collectNow() {
+  const response = page.waitForResponse(result => result.request().method() === 'POST' && new URL(result.url()).pathname === `/api/v1/integrations/home-assistant/links/${temperature.id}/collect`);
+  await page.getByRole('button', { name: 'Lire E2E Temperature maintenant', exact: true }).click();
+  expect((await response).status()).toBe(202);
+  await expect(page.getByText('Collecte planifiée.', { exact: false }).last()).toBeVisible();
+ }
+ await collectNow();
+ execFileSync('docker', [...compose, '-T', 'app', 'php', 'artisan', 'queue:work', 'database', '--queue=integrations', '--stop-when-empty', '--tries=1'], options);
+ await collectNow();
+ execFileSync('docker', [...compose, '-T', 'app', 'php', 'artisan', 'queue:work', 'database', '--queue=integrations', '--stop-when-empty', '--tries=1'], options);
+ expect((await (await page.request.get(`/api/v1/sensors/${temperature.sensor.id}/measurements`)).json()).meta.total).toBe(1);
+ await page.getByRole('button', { name: 'Voir les mesures de E2E Temperature', exact: true }).click();
+ const history = page.getByRole('dialog', { name: 'Historique · E2E Temperature', exact: true });
+ await expect(history.getByRole('table').getByText('21,5 °C', { exact: true })).toBeVisible();
+ await expect(history.getByRole('img', { name: /Moyenne par créneau/ })).toBeVisible();
+ await page.keyboard.press('Escape');
+ await openModule(page, 'ha');
+ const temperatureCard = page.locator('.link-list > li').filter({ has: page.getByRole('button', { name: 'Voir les mesures de E2E Temperature', exact: true }) });
+ await temperatureCard.getByRole('button', { name: 'Suspendre la collecte', exact: true }).click();
+ await expect(temperatureCard.getByRole('button', { name: 'Lire E2E Temperature maintenant', exact: true })).toBeDisabled();
+ await temperatureCard.getByRole('button', { name: 'Reprendre la collecte', exact: true }).click();
+ await expect(temperatureCard.getByRole('button', { name: 'Suspendre la collecte', exact: true })).toBeVisible();
+ await expect(temperatureCard.getByRole('button', { name: 'Lire E2E Temperature maintenant', exact: true })).toBeEnabled();
+ const csrf = (await page.context().cookies()).find(cookie => cookie.name === 'XSRF-TOKEN')!;
+ const importedAgain = await page.request.post('/api/v1/integrations/home-assistant/import', { headers: { 'X-XSRF-TOKEN': decodeURIComponent(csrf.value) }, data: { device_ids: [(await (await page.request.get('/api/v1/integrations/home-assistant/entities')).json()).data[0].id] } });
+ expect(importedAgain.status()).toBe(201); expect((await importedAgain.json()).data.alreadyImported).toBe(2);
+ await page.setViewportSize({ width: 390, height: 844 });
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+ if (process.env.PLAYWRIGHT_MEASUREMENTS_SCREENSHOT) await page.screenshot({ path: process.env.PLAYWRIGHT_MEASUREMENTS_SCREENSHOT, fullPage: true, animations: 'disabled' });
+ await page.setViewportSize({ width: 1280, height: 720 });
+ await openModule(page, 'home');
+ await openModule(page, 'assets');
+ await page.getByRole('button', { name: 'Ajouter du matériel', exact: true }).click();
+ await (await revealTabbedControl(page.locator('#asset-name'))).fill('Independent Manual Equipment');
+ await page.getByRole('button', { name: /^(?:Enregistrer la fiche|Créer)$/, exact: true }).click();
+ await expect(page.getByRole('button', { name: 'Ouvrir Independent Manual Equipment', exact: true })).toBeVisible();
+ const memberContext = await browser.newContext({ baseURL: 'http://127.0.0.1:18080' });
+ try {
+  const member = await memberContext.newPage(); await member.goto('/'); await (await revealTabbedControl(member.locator('#login-email'))).fill('measurements-member@example.test'); await (await revealTabbedControl(member.locator('#login-password'))).fill('A measurement test password 123!'); await member.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await openModule(member, 'measurements');
+  await expect(member.getByRole('button', { name: 'Browse Home Assistant entities', exact: true })).toHaveCount(0);
+  await member.getByRole('button', { name: 'History · E2E Temperature', exact: true }).click();
+  await expect(member.getByRole('table').getByText('21.5 °C', { exact: true })).toBeVisible();
+  expect((await member.request.get('/api/v1/integrations/home-assistant/entities')).status()).toBe(403);
+  expect((await member.request.get(`/api/v1/sensors/${temperature.sensor.id}/measurements`)).status()).toBe(200);
+ } finally { await memberContext.close(); }
+});

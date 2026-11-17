@@ -1,0 +1,46 @@
+.collection-layout { min-width: 0; max-width: 100%; }
+.collection-view-controls { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-1-5); margin: var(--space-3) 0; }
+.collection-view-controls .list-action-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.collection-view-controls svg { display: block; width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+.collection-view-controls button[aria-pressed=true] { color: var(--theme-accent); background: var(--theme-subtle); border-color: var(--theme-accent); }
+.collection-table-view { min-width: 0; max-width: 100%; margin: var(--space-3) 0; }
+.collection-table { max-width: 100%; font-size: .78rem; }
+.collection-table :is(th, td) { padding: var(--space-2) var(--space-3); vertical-align: middle; }
+.collection-table th { white-space: nowrap; font-size: .72rem; }
+.collection-table .collection-column-name { min-width: 13rem; max-width: 22rem; }
+.collection-table .collection-column-actions { min-width: 6rem; width: 1%; }
+.collection-table .collection-column-selection { width: 2.5rem; }
+.collection-table .collection-column-location { min-width: 11rem; max-width: 16rem; }
+.collection-table .collection-column-action { min-width: 10rem; }
+.collection-table .collection-column-actions .plant-card-actions { padding: 0; margin: 0; gap: var(--space-2); min-width: 16rem; }
+.collection-table-actions { justify-content: flex-end; display: flex; align-items: center; gap: var(--space-1-5); flex-wrap: nowrap; }
+.collection-table-tag { display: inline-flex; align-items: center; gap: var(--space-1-5); white-space: nowrap; }
+.collection-table-tag svg { width: 1rem; height: 1rem; }
+.collection-identity { display: flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 100%; border: 0; padding: 0; text-align: start; background: transparent; color: inherit; font: inherit; }
+button.collection-identity { cursor: pointer; }
+button.collection-identity:hover strong { color: var(--theme-accent); }
+.collection-thumbnail { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; overflow: hidden; border-radius: .45rem; background: var(--theme-subtle); color: var(--theme-muted); }
+.collection-thumbnail > img { width: 100%; height: 100%; object-fit: cover; }
+.collection-thumbnail > .photo-placeholder-mark { width: 2rem; height: 2.4rem; }
+.collection-thumbnail > svg { width: 1.25rem; height: 1.25rem; }
+.collection-identity-text { display: grid; min-width: 0; gap: var(--space-1); }
+.collection-identity-text strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 18rem; font-size: .8rem; }
+.collection-identity-text small { color: var(--theme-muted); font-size: .65rem; }
+.collection-table-select { width: 1rem; height: 1rem; accent-color: var(--theme-accent); }
+
+.collection-table-tags { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1-5); margin-top: var(--space-1-5); }
+.collection-record-tag { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: 13rem; padding: var(--space-1) var(--space-2); border: 1px solid var(--theme-border); border-radius: 2rem; background: var(--theme-subtle); color: var(--theme-text); font-size: .65rem; font-weight: 550; line-height: 1.3; }
+.collection-record-tag > svg { width: .85rem; height: .85rem; flex: 0 0 auto; }
+.collection-record-tag > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collection-table .collection-column-readings { min-width: 13rem; }
+.collection-table .collection-column-watering { min-width: 12rem; }
+.collection-table .table-watering { display: grid; gap: var(--space-2); }
+.collection-table .table-watering .expected-action { padding: var(--space-1-5) var(--space-2); font-size: .7rem; }
+.collection-table-tags .n-tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border-radius: 2rem; font-size: .65rem; font-weight: 550; line-height: 1.3; }
+
+.collection-table-location { display: inline-flex; align-items: flex-start; gap: var(--space-1-5); }
+.collection-table-location > svg { width: 1rem; height: 1rem; flex: 0 0 auto; margin-top: var(--space-0-5); color: var(--theme-muted); }
+
+.collection-table.plant-table tbody > tr > td { padding: var(--space-4) var(--space-3); line-height: 1.5; }
+.collection-table.plant-table .collection-table-tags { gap: var(--space-2); margin-top: var(--space-2); }
+.collection-table.plant-table .collection-identity { gap: var(--space-3); }
