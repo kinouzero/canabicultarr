@@ -1,7 +1,7 @@
 {
   "name": "canabicultarr-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "version": "python3 ../scripts/release-metadata.py --sync-compose",

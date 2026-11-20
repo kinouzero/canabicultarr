@@ -3,6 +3,7 @@
   "moveTileUp": "Monter {name}",
   "moveTileDown": "Descendre {name}",
   "chooseTiles": "Choisir les tuiles",
+  "locationChannels": "Canaux",
   "tileCount": "{count} / {total} canaux affichés",
   "tileSelectionHelp": "Choisissez les canaux à afficher ici. Vos choix sont mémorisés dans votre compte pour ce lieu.",
   "title": "Vos plantes, en un regard",

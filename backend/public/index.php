@@ -5,8 +5,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Determine if the application is in maintenance mode...
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+// Check maintenance state for the selected instance before Laravel boots.
+$desktopData = getenv('CANABICULTARR_DESKTOP_DATA_DIR');
+$storage = $desktopData !== false && $desktopData !== '' ? $desktopData.'/storage' : __DIR__.'/../storage';
+if (file_exists($maintenance = $storage.'/framework/maintenance.php')) {
     require $maintenance;
 }
 

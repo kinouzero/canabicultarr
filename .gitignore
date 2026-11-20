@@ -38,3 +38,6 @@ __pycache__/
 
 *.tar.age
 *.tar.age.part
+
+# Local desktop installer builds.
+/.desktop-build/

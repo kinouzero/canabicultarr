@@ -424,9 +424,123 @@ jobs:
       - name: Build unified application image
         run: docker build --target runtime --tag canabicultarr-app:ci -f infrastructure/app/Dockerfile .
 
+  desktop-installers:
+    name: Desktop installer (${{ matrix.target }})
+    needs: frontend
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos-arm64
+            runner: macos-15
+            arch: arm64
+            source: Canabicultarr-Desktop-preview-mac-arm64.dmg
+            extension: dmg
+          - target: macos-x64
+            runner: macos-15-intel
+            arch: x86_64
+            source: Canabicultarr-Desktop-preview-mac-x86_64.dmg
+            extension: dmg
+          - target: linux-amd64
+            runner: ubuntu-24.04
+            arch: amd64
+            source: canabicultarr-desktop_0.2.0-preview_amd64.deb
+            extension: deb
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+            source: canabicultarr-desktop_0.2.0-preview_arm64.deb
+            extension: deb
+          - target: windows-x64
+            runner: ubuntu-24.04
+            arch: amd64
+            source: Canabicultarr-Desktop-preview-win-x64.exe
+            extension: exe
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      DESKTOP_TARGET: ${{ matrix.target }}
+      DESKTOP_ARCH: ${{ matrix.arch }}
+      DESKTOP_SOURCE: ${{ matrix.source }}
+      DESKTOP_EXTENSION: ${{ matrix.extension }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - name: Check the application version
+        run: |
+          version=$(python3 scripts/release-metadata.py --check-tag)
+          printf 'DESKTOP_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+      - name: Download the tested frontend build
+        if: runner.os == 'macOS'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      - name: Set up Go for the macOS gateway
+        if: runner.os == 'macOS'
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: '1.26'
+          cache: false
+      - name: Install PHP and Composer on Apple Silicon
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          brew install php composer
+          echo "$(brew --prefix php)/bin" >> "$GITHUB_PATH"
+      - name: Build and verify the macOS disk image
+        if: runner.os == 'macOS'
+        env:
+          CANABICULTARR_DESKTOP_BUILD: ${{ github.run_number }}
+        run: |
+          test "$(uname -m)" = "$DESKTOP_ARCH"
+          # Intel runners provide PHP and Composer in their system image.
+          php -n -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 5 ? 0 : 1);'
+          composer --working-dir=backend install --no-dev --optimize-autoloader --prefer-dist --no-scripts --no-interaction --no-progress
+          CANABICULTARR_DESKTOP_VERSION="$DESKTOP_VERSION" sh infrastructure/desktop/macos/build.sh
+          sh infrastructure/desktop/macos/test.sh
+      - name: Set up Docker Buildx
+        if: runner.os == 'Linux'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Build and verify the Debian package
+        if: matrix.extension == 'deb'
+        run: |
+          package_version=$(printf '%s' "$DESKTOP_VERSION" | tr '-' '~')
+          docker buildx build --platform "linux/$DESKTOP_ARCH" --output type=local,dest=.desktop-build \
+            --build-arg "DESKTOP_VERSION=$package_version" -f infrastructure/desktop/linux/Dockerfile .
+          sh infrastructure/desktop/linux/test.sh "$DESKTOP_ARCH"
+      - name: Build and verify the Windows installer
+        if: matrix.extension == 'exe'
+        run: |
+          docker buildx build --platform linux/amd64 --output type=local,dest=.desktop-build \
+            --build-arg "DESKTOP_VERSION=$DESKTOP_VERSION" -f infrastructure/desktop/windows/Dockerfile .
+          docker buildx build --platform linux/amd64 --target wine --load -t cana-windows-smoke:local \
+            -f infrastructure/desktop/windows/Dockerfile .
+          sh infrastructure/desktop/windows/test-wine.sh
+      - name: Stage the versioned installer
+        run: |
+          mkdir -p "$RUNNER_TEMP/desktop"
+          cp ".desktop-build/$DESKTOP_SOURCE" \
+            "$RUNNER_TEMP/desktop/Canabicultarr-Desktop-$DESKTOP_VERSION-$DESKTOP_TARGET.$DESKTOP_EXTENSION"
+      - name: Upload the tested installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: desktop-${{ matrix.target }}
+          path: ${{ runner.temp }}/desktop/
+          if-no-files-found: error
+          compression-level: 0
+          overwrite: true
+          retention-days: 7
+
   publish:
-    name: GitHub release and container images
-    needs: [frontend, backend-coverage, browser-coverage, runtime-e2e, infrastructure]
+    name: GitHub release, container images and Desktop installers
+    needs: [frontend, backend-coverage, browser-coverage, runtime-e2e, infrastructure, desktop-installers]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -455,6 +569,24 @@ jobs:
           export RELEASE_SHA
           echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
           python3 scripts/release-metadata.py
+      - name: Download the tested Desktop installers
+        if: steps.release.outputs.publish == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/desktop
+      - name: Check the installer set and create checksums
+        if: steps.release.outputs.publish == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        working-directory: ${{ runner.temp }}/desktop
+        run: |
+          prefix="Canabicultarr-Desktop-$RELEASE_VERSION"
+          set -- "$prefix-macos-arm64.dmg" "$prefix-macos-x64.dmg" "$prefix-windows-x64.exe" \
+            "$prefix-linux-amd64.deb" "$prefix-linux-arm64.deb"
+          for asset in "$@"; do test -s "$asset"; done
+          sha256sum "$@" > SHA256SUMS.txt
       - name: Sign in to GitHub Container Registry
         if: steps.release.outputs.publish == 'true'
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
@@ -509,13 +641,20 @@ jobs:
           for key in ['GHCR_IMAGE', 'HUB_IMAGE']:
               lines.append('`docker pull ' + os.environ[key] + ':' + os.environ['RELEASE_VERSION'] + '`')
               lines.append('')
+          lines += ['Desktop installers:', '',
+                    '- macOS Apple Silicon and Intel (.dmg, ad hoc signed, without notarization)',
+                    '- Windows x64 (.exe, unsigned)',
+                    '- Debian-family Linux AMD64 and ARM64 (.deb)',
+                    '', 'Verify the downloaded installer using `SHA256SUMS.txt`.', '']
           lines.append('Built from the exact commit that passed CI. See the installation guide before first startup or updating.')
           Path(os.environ['RUNNER_TEMP'], 'release-notes.md').write_text('\n'.join(lines))
           PY
           if [ "$PRERELEASE" = true ]; then
             gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" --title "$RELEASE_TAG" \
-              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --prerelease --latest=false
+              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --prerelease --latest=false \
+              "$RUNNER_TEMP/desktop/"*
           else
             gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" --title "$RELEASE_TAG" \
-              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --latest
+              --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md" --latest \
+              "$RUNNER_TEMP/desktop/"*
           fi

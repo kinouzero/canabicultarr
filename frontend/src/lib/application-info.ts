@@ -1,6 +1,8 @@
 import { ref, shallowRef } from 'vue';
 import { applicationInfoApi, type ApplicationInfo } from '../api/application-info';
 
+export const applicationVersion: string = import.meta.env.VITE_APP_VERSION;
+
 const data = shallowRef<ApplicationInfo | null>(null);
 const busy = ref(false);
 const error = shallowRef<unknown>(null);

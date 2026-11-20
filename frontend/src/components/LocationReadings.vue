@@ -5,9 +5,11 @@ import { useI18n } from 'vue-i18n';
 import { ApiError } from '../api/auth';
 import { plantDashboardApi } from '../api/plants';
 import type { PlantMeasurement } from '../api/plants';
+import { useRememberDisclosure } from '../lib/disclosure-preferences';
 import { insightPreferenceScope } from '../lib/insight-preferences';
 import { preferenceStore, setUiPreference } from '../lib/ui-preferences';
 import AppIcon from './AppIcon.vue';
+import DisclosureSummary from './DisclosureSummary.vue';
 import FormDialog from './FormDialog.vue';
 import ListActionButton from './ListActionButton.vue';
 import PlantReadings from './PlantReadings.vue';
@@ -17,6 +19,7 @@ const emit = defineEmits<{ accessLost: [cause: ApiError] }>();
 const { t } = useI18n();
 const scope = inject(insightPreferenceScope, undefined);
 const account = () => scope?.value ?? '';
+const vRememberDisclosure = useRememberDisclosure('dashboard-channels');
 const open = ref(false);
 const menuOpen = ref(false);
 watch(open, visible => { if (!visible) menuOpen.value = false; });
@@ -82,14 +85,17 @@ function optionAttributes(option: SelectOption | SelectGroupOption) {
 const options = computed(() => readings.value.map(reading => ({ value: reading.sensorId, label: `${reading.device.name} · ${reading.sensorName}` })));
 </script>
 <template>
- <section v-if="readings.length" class="location-readings" :aria-label="t('plants.measurements.title')">
+ <details v-if="readings.length" v-remember-disclosure="contextKey" open class="location-readings">
+  <DisclosureSummary :level="3" icon="sensor">
+   <span>{{ t('plantHome.locationChannels') }}</span>
+   <small>{{ t('plantHome.tileCount', { count: visible.length, total }) }}</small>
+  </DisclosureSummary>
   <div class="location-readings-toolbar">
-   <span>{{ t('plantHome.tileCount', { count: visible.length, total }) }}</span>
+   <NButton v-if="readings.length < total" size="small" :loading="loading" @click="more"><template #icon><AppIcon name="expand" /></template>{{ t(failed ? 'actions.retry' : 'selectControl.more') }}</NButton>
    <ListActionButton icon="settings" :label="t('plantHome.chooseTiles')" @click="open = true" />
   </div>
-  <NButton v-if="readings.length < total" size="small" :loading="loading" @click="more"><template #icon><AppIcon name="expand" /></template>{{ t(failed ? 'actions.retry' : 'selectControl.more') }}</NButton>
   <PlantReadings :context-key="contextKey" :readings="visible" tiles inline show-empty @access-lost="emit('accessLost', $event)" />
- </section>
+ </details>
  <FormDialog v-if="open" :visible="true" size="compact" icon="sensor" :title="t('plantHome.chooseTiles')" :close-label="t('actions.close')" @update:visible="open = $event">
   <p class="location-readings-help">{{ t('plantHome.tileSelectionHelp') }}</p>
   <label class="location-readings-label" :for="selectId">{{ t('plants.measurements.summaryChannels') }}</label>
@@ -115,8 +121,7 @@ const options = computed(() => readings.value.map(reading => ({ value: reading.s
 </template>
 <style scoped>
 .location-readings { min-width: 0; margin: var(--space-3) 0; }
-.location-readings-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
-.location-readings-toolbar > span { font-size: .7rem; color: var(--theme-muted); }
+.location-readings-toolbar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-2) 0; }
 .location-readings-help { margin: 0 0 var(--space-3); color: var(--theme-muted); font-size: .8rem; }
 .location-readings-label { display: block; margin-bottom: var(--space-2); font-size: .78rem; }
 .location-readings-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); width: 100%; }

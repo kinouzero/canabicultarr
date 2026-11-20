@@ -15,6 +15,7 @@ import './styles/search-filters.css';
 import './styles/header-actions.css';
 import './styles/form-controls.css';
 import './styles/naive.css';
+import './styles/disclosures.css';
 import { responsiveSelect } from './lib/responsive-select';
 import { initializeAppearance } from './lib/appearance';
 import App from './App.vue';

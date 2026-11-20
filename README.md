@@ -6,9 +6,11 @@ Follow each plant from sowing to archival, connect environmental sensors and kee
 
 **[User handbook](https://github.com/kinouzero/canabicultarr/wiki/Home)** · **[Installation](https://github.com/kinouzero/canabicultarr/wiki/installation)** · **[Administration](https://github.com/kinouzero/canabicultarr/wiki/settings)** · **[Development](https://github.com/kinouzero/canabicultarr/wiki/local-development)**
 
-> **0.1.0 — first public release.** Build from source or use a published container image. Back up your data before updating.
+> **0.2.0** adds Desktop installers and mobile offline access. Build from source or use a published container image. Back up your data before updating.
 
 ![Canabicultarr dashboard with fictional demonstration data](https://raw.githubusercontent.com/wiki/kinouzero/canabicultarr/images/dashboard.png)
+
+Desktop installers for macOS, Windows and Debian-family Linux are built for version tags and attached to [GitHub releases](https://github.com/kinouzero/canabicultarr/releases) with SHA-256 checksums.
 
 ## Features
 
@@ -72,7 +74,7 @@ The **[illustrated handbook](https://github.com/kinouzero/canabicultarr/wiki/Hom
 - Configure optional connections in the administrator UI or through environment variables. Environment-provided values lock the corresponding UI fields.
 - Use private local storage or an S3-compatible destination for uploads. Changing the default destination does not migrate existing files.
 - Back up PostgreSQL, uploaded files and the original application key together. See the [operations guide](https://github.com/kinouzero/canabicultarr/wiki/deployment).
-- Protected data, edits and device commands require a server connection. PWA support provides a basic connection fallback, not full offline synchronization.
+- A paired PWA can save an encrypted copy of authorized sites, plant summaries and selected files. It can queue journal notes, planned plants, care actions and photos to send when the server is reachable. Device commands require a live connection.
 
 ## Architecture
 

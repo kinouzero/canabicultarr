@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AssetStatus;
+use App\Enums\MeasurementNature;
 use App\Models\Plant;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection as ModelCollection;
@@ -36,6 +37,11 @@ class PlantMeasurements
                     $reading = null;
                 }
 
+                $interval = $sensor->expected_interval_seconds;
+                $freshnessSeconds = $sensor->measurementType->nature === MeasurementNature::SubstrateMoisture->value && $sensor->measurementType->unit === '%'
+                    ? PlantWateringNeeds::freshnessSeconds((int) $interval)
+                    : max(120, $interval * 2);
+
                 return [
                     'switchControl' => $switches[$sensor->id] ?? null,
                     'sourceRevision' => $sourceRevisions[$sensor->id] ?? null,
@@ -45,7 +51,7 @@ class PlantMeasurements
                     'quality' => $reading?->quality, 'value' => $reading?->value, 'unit' => $reading ? $reading->unit : $sensor->measurementType->unit,
                     'observedAt' => $reading?->observed_at->toISOString(),
                     'isEnabled' => $sensor->is_enabled && $device->status === AssetStatus::Active,
-                    'isStale' => $reading && $sensor->expected_interval_seconds > 0 && $reading->observed_at->lessThan($now->subSeconds(max(120, $sensor->expected_interval_seconds * 2))),
+                    'isStale' => $reading && $interval > 0 && $reading->observed_at->lessThan($now->subSeconds($freshnessSeconds)),
                 ];
             }))->values()->all();
             $plant->setRelation('latestMeasurements', $measurements);

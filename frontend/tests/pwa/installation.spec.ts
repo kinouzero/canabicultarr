@@ -24,7 +24,7 @@ async function controlled(page: Page) {
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 }
 
-test('production metadata supplies install icons and translated manual installation help', async ({ page }) => {
+test('production metadata supplies install icons and translated manual installation help', { tag: '@cross-engine' }, async ({ page }) => {
   await publicLogin(page);
   const manifest = await page.evaluate(async () => {
     const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')!;
@@ -51,6 +51,15 @@ test('production metadata supplies install icons and translated manual installat
   if (process.env.PLAYWRIGHT_PWA_SCREENSHOT) await page.screenshot({ path: process.env.PLAYWRIGHT_PWA_SCREENSHOT, fullPage: true, animations: 'disabled' });
 });
 
+test('installation help directs insecure LAN connections to trusted HTTPS', { tag: '@cross-engine' }, async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'isSecureContext', { value: false }));
+  await publicLogin(page);
+  await page.getByText('Installation help', { exact: true }).click();
+  await expect(page.getByText('To install on your phone', { exact: false })).toBeVisible();
+  await expect(page.getByText('Connect to your Canabicultarr server', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Install application', exact: true })).toHaveCount(0);
+});
+
 test('native install prompt is offered on a click, consumed once, and confirmation follows appinstalled', async ({ page }) => {
   await publicLogin(page);
   await page.evaluate(() => {
@@ -65,6 +74,16 @@ test('native install prompt is offered on a click, consumed once, and confirmati
   await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
   await expect(page.getByText('Application installed.', { exact: true })).toBeVisible();
   await expect(page.locator('summary')).toHaveCount(0);
+});
+
+test('a previously opened app can display the public offline page', { tag: '@cross-engine' }, async ({ page, context }) => {
+  await publicLogin(page);
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await context.setOffline(true);
+  const response = await page.goto('/');
+  expect(response?.status()).toBe(503);
+  await expect(page.getByRole('heading', { name: 'Connection unavailable', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Connexion indisponible', exact: true })).toBeVisible();
 });
 
 test('offline reload exposes only bilingual public fallback, never API responses, and recovers online', async ({ page, context }) => {

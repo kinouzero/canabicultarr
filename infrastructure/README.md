@@ -7,6 +7,7 @@ Canabicultarr runs one application container with its web server, PHP, queue wor
 | `app/Dockerfile` | Production runtime and development build targets |
 | `app/*.conf` | Nginx, request security and process supervision |
 | `app/*.sh` | Entrypoint, health and MQTT worker supervision |
+| `desktop/` | Isolated Desktop runtime and installers for macOS, Debian-family Linux, and Windows x64 |
 | `../scripts/test-environment.py` | Generate a temporary, isolated acceptance stack from the deployment files |
 
 ## Compose files

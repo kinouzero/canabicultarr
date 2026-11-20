@@ -2,9 +2,8 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { NButton } from 'naive-ui';
 import AppIcon from './AppIcon.vue';
-import { applicationInfo } from '../lib/application-info';
+import { applicationInfo, applicationVersion as version } from '../lib/application-info';
 import { useI18n } from 'vue-i18n';
-import { version } from '../../package.json';
 import BrandMark from './BrandMark.vue';
 
 const props = defineProps<{ name: string; checkUpdates?: boolean }>();

@@ -13,8 +13,7 @@ button.breadcrumb-link:focus-visible { outline: 2px solid var(--theme-focus, #63
 .breadcrumb-segment { display: inline-flex; align-items: center; gap: var(--space-0-5); min-width: 0; max-width: 100%; }
 
 .breadcrumb-menu-trigger { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: var(--theme-muted); cursor: pointer; }
-.breadcrumb-menu-trigger > svg { width: .8rem; height: .8rem; transform: rotate(-90deg); transition: transform .15s ease; }
-.breadcrumb-menu-trigger[aria-expanded=true] > svg { transform: rotate(0); }
+.breadcrumb-menu-trigger > svg { width: .8rem; height: .8rem; }
 .breadcrumb-menu-trigger:hover, .breadcrumb-menu-trigger[aria-expanded=true] { background: var(--theme-subtle); color: var(--theme-text); }
 .breadcrumb-menu-trigger:focus-visible { outline: 2px solid var(--theme-focus); outline-offset: 2px; }
 .app-breadcrumb .n-breadcrumb-item__separator { display: none; }

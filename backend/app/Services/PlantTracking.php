@@ -437,12 +437,12 @@ class PlantTracking
         return $plant->load($this->relations());
     }
 
-    public function water(User $actor, Plant $target, array $data): Plant
+    public function water(User $actor, Plant $target, array $data, bool $offline = false): Plant
     {
         $fertilizers = $data['fertilizers'] ?? [];
         usort($fertilizers, fn ($a, $b) => strcmp($a['inventory_item_id'], $b['inventory_item_id']));
         $hash = $this->hash(['water_liters' => $data['water_liters'] ?? null, 'fertilizers' => $fertilizers, 'action' => 'watered', 'with_products' => (bool) $data['with_products'], 'comment' => $data['comment'] ?? null, 'occurred_at' => isset($data['occurred_at']) ? CarbonImmutable::parse($data['occurred_at'])->utc()->toISOString() : null, ...$this->attachmentHash($data)]);
-        $plant = DB::transaction(function () use ($actor, $target, $data, $hash) {
+        $plant = DB::transaction(function () use ($actor, $target, $data, $hash, $offline) {
             $current = $this->actor($actor);
             $plant = Plant::whereKey($target->id)->lockForUpdate()->firstOrFail();
             Gate::forUser($current)->authorize('update', $plant);
@@ -454,7 +454,7 @@ class PlantTracking
 
                 return $plant;
             }
-            $pump = app(PumpControl::class)->watering($current, $plant, $data['request_id']);
+            $pump = $offline ? null : app(PumpControl::class)->watering($current, $plant, $data['request_id']);
             $this->version($plant, $data['version']);
             $data['document_ids'] = $this->attachments($current, $data);
             if (! in_array($plant->phase, LifecycleDefinition::allowing('watering'), true)) {
@@ -463,6 +463,13 @@ class PlantTracking
             $time = $this->time($data['occurred_at'] ?? null);
             if (($earliest = $plant->phase_started_at ?? $plant->started_at) && $time->lessThan($earliest)) {
                 throw new PlantException('plants.errors.timeInvalid', 422);
+            }
+            if ($offline && $data['with_products']) {
+                $scheduled = array_column(app(FertilizerSchedule::class)->forPlant($plant, $time)['products'], 'inventory_item_id');
+                $selected = array_column($data['fertilizers'], 'inventory_item_id');
+                if (PlantWatering::duringFlush($plant, $time) || array_diff($selected, $scheduled) !== []) {
+                    throw new PlantException('offlinePlants.recipeChanged');
+                }
             }
             $plant->version++;
             $plant->save();

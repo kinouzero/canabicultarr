@@ -39,9 +39,10 @@ return [
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
             'busy_timeout' => (int) env('DB_BUSY_TIMEOUT', 5000),
-            'journal_mode' => null,
+            'journal_mode' => env('DB_SQLITE_JOURNAL_MODE'),
             'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            // Reserve the write lock before Desktop transactions read a WAL snapshot.
+            'transaction_mode' => getenv('CANABICULTARR_DESKTOP_DATA_DIR') ? 'IMMEDIATE' : 'DEFERRED',
         ],
 
         'mysql' => [

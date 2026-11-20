@@ -79,6 +79,11 @@ def github_get(path):
 
 if __name__ == '__main__':
     version = json.loads((ROOT / 'frontend/package.json').read_text())['version']
+    if sys.argv[1:] == ['--check-tag']:
+        if not VERSION.fullmatch(version) or os.environ.get('RELEASE_TAG') != 'v' + version:
+            sys.exit('Release tag must match frontend/package.json exactly.')
+        print(version)
+        sys.exit()
     compose = ROOT / 'compose.yaml'
     contents = compose.read_text()
     if sys.argv[1:] == ['--sync-compose']:
@@ -87,7 +92,7 @@ if __name__ == '__main__':
             compose.write_text(updated)
         sys.exit()
     if len(sys.argv) != 1:
-        sys.exit('Usage: python3 scripts/release-metadata.py [--sync-compose]')
+        sys.exit('Usage: python3 scripts/release-metadata.py [--sync-compose | --check-tag]')
     ghcr = 'ghcr.io/' + os.environ['GITHUB_REPOSITORY'].lower()
     if compose_with_image(contents, version, ghcr) != contents:
         sys.exit('Compose image does not match the release. Run python3 scripts/release-metadata.py --sync-compose before tagging.')

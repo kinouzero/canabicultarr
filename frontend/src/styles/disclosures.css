@@ -1,0 +1,19 @@
+/* The shared Lucide and Naive UI chevrons point down at zero rotation. */
+.app-disclosure-icon,
+.n-base-suffix__arrow {
+  transform: rotate(-90deg);
+  transition: transform .15s ease;
+}
+
+[aria-expanded="true"] > .app-disclosure-icon,
+details[open] > summary .app-disclosure-icon,
+.n-base-selection--active .n-base-suffix__arrow {
+  transform: rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-disclosure-icon,
+  .n-base-suffix__arrow {
+    transition: none;
+  }
+}

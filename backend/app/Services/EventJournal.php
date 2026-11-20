@@ -20,7 +20,7 @@ class EventJournal
 {
     public const SORT_COLUMNS = ['occurred' => 'occurred_at', 'created' => 'created_at', 'name' => 'title'];
 
-    public function __construct(private EventContext $context) {}
+    public function __construct(private EventContext $context, private MobileJournalFeed $mobileFeed) {}
 
     public function search(array $criteria): LengthAwarePaginator
     {
@@ -65,6 +65,7 @@ class EventJournal
             if (! $creating && (int) $data['version'] !== $entry->version) {
                 throw new EventJournalException('events.errors.conflict');
             }
+            $previousMobileSite = MobileJournalFeed::siteOf($entry);
             $entry->fill(Arr::only($data, ['title', 'body', 'category', 'severity']));
             if (isset($data['occurred_at'])) {
                 $entry->occurred_at = CarbonImmutable::parse($data['occurred_at'])->utc();
@@ -118,6 +119,7 @@ class EventJournal
                 $entry->save();
                 $entry->revisions()->create(['version' => $entry->version, 'changed_by' => $current->id,
                     'editor_uuid' => $current->uuid, 'snapshot' => $entry->snapshot(), 'recorded_at' => now()]);
+                $this->mobileFeed->record($entry, $previousMobileSite);
             }
 
             return [$entry->load('author:id,uuid,name'), $fields, $changed];

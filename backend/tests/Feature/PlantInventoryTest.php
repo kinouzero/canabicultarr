@@ -105,6 +105,84 @@ class PlantInventoryTest extends TestCase
         $this->postJson($url, $payload)->assertConflict();
     }
 
+    public function test_offline_recipe_uses_allowed_balances_and_retries_without_double_consumption(): void
+    {
+        $product = $this->item('fertilizer', '4');
+        $other = $this->item('fertilizer', '10');
+        $private = StorageLocation::create(['name' => 'Private shelf']);
+        app(Inventory::class)->record($this->admin, $product, [
+            'kind' => 'receipt', 'quantity' => '20', 'version' => $product->version, 'request_id' => (string) Str::uuid(),
+            'reason' => 'Fixture stock', 'destination' => ['id' => $private->id],
+        ]);
+        $usage = [...$this->usage($product, '2.500'), 'balance_id' => $product->balances()->where('storage_location_id', $this->storage->id)->firstOrFail()->id];
+        $settings = LifecycleSetting::findOrFail(1);
+        $stages = $settings->stages;
+        $stages[1]['water_liters'] = '1.000';
+        $stages[1]['fertilizer_periods'] = [[
+            'id' => (string) Str::uuid(), 'name' => null, 'unit' => 'days', 'start' => 0, 'end' => null,
+            'products' => [['inventory_item_id' => $product->id, 'dose_per_liter' => '2.000']],
+        ]];
+        $settings->update(['stages' => $stages]);
+        $competingPlant = app(PlantTracking::class)->create($this->admin, [
+            'name' => 'Competing plant', 'strain_id' => $this->plant->strain_id, 'request_id' => (string) Str::uuid(),
+            'location' => ['type' => 'site', 'id' => $this->site->id],
+        ]);
+        $grower = User::factory()->create([
+            'permission_role_ids' => [AccessProfileSeeder::defaultProfile('cultivation_manager')->id],
+            'inventory_location_access' => [$this->storage->id],
+        ]);
+        $this->actingAs($grower);
+        $base = 'https://localhost/api/v1/account/mobile-devices';
+        $code = $this->postJson($base.'/pairing')->assertCreated()->json('data.code');
+        $device = $this->postJson($base.'/redeem', ['code' => $code, 'label' => 'Phone'])->assertCreated()->json('data.id');
+        $version = $this->getJson($base.'/offline-sites')->assertOk()->json('data.version');
+        $catalog = $this->getJson($base.'/offline-plants?version='.$version)->assertOk()
+            ->assertJsonCount(2, 'data.plants');
+        $savedPlants = collect($catalog->json('data.plants'))->keyBy('id');
+        $this->assertSame('1.000', $savedPlants[$this->plant->id]['waterLiters']);
+        foreach ($savedPlants as $savedPlant) {
+            $recipe = $savedPlant['wateringRecipe']['products'][0];
+            $this->assertSame('2.000', $recipe['dose']);
+            $this->assertCount(1, $recipe['balances']);
+            $this->assertSame($usage['balance_id'], $recipe['balances'][0]['id']);
+        }
+        $this->assertStringNotContainsString($private->name, $catalog->getContent());
+        $url = $base.'/offline-watering/'.$this->plant->id;
+        $input = $this->watering([
+            'water_liters' => '1.500', 'fertilizers' => [$usage], 'occurred_at' => now()->toISOString(),
+            'account_id' => $grower->uuid, 'device_id' => $device,
+        ]);
+        $competingDraft = [
+            ...$input, 'request_id' => (string) Str::uuid(), 'version' => $savedPlants[$competingPlant->id]['version'],
+        ];
+        $this->postJson($url, [...$input, 'fertilizers' => [$this->usage($other, '1')]])->assertConflict()
+            ->assertJsonPath('error.code', 'offlinePlants.recipeChanged');
+        $this->postJson($url, $input)->assertOk();
+        $this->postJson($url, $input)->assertOk();
+        $this->assertSame(20250, $product->fresh()->total_units);
+        $this->assertSame(1, $this->plant->events()->where('kind', 'watered')->count());
+        $this->postJson($base.'/offline-watering/'.$competingPlant->id, $competingDraft)
+            ->assertUnprocessable()->assertJsonPath('errors.stock.0', 'plants.stock.insufficientStock');
+        $this->assertSame(20250, $product->fresh()->total_units);
+        $this->assertSame(250, $product->balances()->findOrFail($usage['balance_id'])->quantity_units);
+        $this->assertSame($competingDraft['version'], $competingPlant->fresh()->version);
+        $this->assertFalse($competingPlant->events()->where('kind', 'watered')->exists());
+
+        $stages[4]['fertilizer_periods'] = $stages[1]['fertilizer_periods'];
+        $settings->update(['stages' => $stages]);
+        $this->plant->fresh()->forceFill([
+            'phase' => 'flowering', 'phase_started_at' => now()->subWeek(), 'phase_due_at' => now()->addDay(),
+            'duration_snapshot' => ['durations' => ['flush' => 2]],
+        ])->save();
+        $updatedPlants = $this->getJson($base.'/offline-plants?version='.$version)->assertOk()->json('data.plants');
+        $updatedPlant = collect($updatedPlants)->firstWhere('id', $this->plant->id);
+        $this->assertSame('flowering', $updatedPlant['phase']);
+        $this->assertNull($updatedPlant['wateringRecipe']);
+        $afterPhaseChange = [...$input, 'request_id' => (string) Str::uuid(), 'version' => $this->plant->fresh()->version];
+        $this->postJson($url, $afterPhaseChange)->assertConflict()->assertJsonPath('error.code', 'offlinePlants.recipeChanged');
+        $this->assertSame(20250, $product->fresh()->total_units);
+    }
+
     public function test_insufficient_stock_rolls_back_all_products_watering_and_version(): void
     {
         $one = $this->item('fertilizer', '10');

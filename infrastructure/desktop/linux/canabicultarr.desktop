@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Canabicultarr
+Comment=Open the local Canabicultarr instance
+Comment[fr]=Ouvrir l’instance locale Canabicultarr
+Exec=/opt/canabicultarr/canabicultarr-desktop
+TryExec=/opt/canabicultarr/canabicultarr-desktop
+Icon=canabicultarr
+Terminal=false
+Categories=Utility;

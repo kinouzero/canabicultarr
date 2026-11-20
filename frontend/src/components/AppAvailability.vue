@@ -17,13 +17,18 @@ interface InstallPrompt extends Event {
 }
 const { t } = useI18n();
 const offline = ref(!navigator.onLine);
+const secureContext = window.isSecureContext;
 const installing = ref(false);
 const notice = ref('');
 const prompt = shallowRef<InstallPrompt | null>(null);
 const standalone = window.matchMedia('(display-mode: standalone)');
 const installed = ref(standalone.matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
 function connectionChanged() { offline.value = !navigator.onLine; }
-function offerInstall(event: Event) { event.preventDefault(); prompt.value = event as InstallPrompt; }
+function offerInstall(event: Event) {
+  if (!secureContext) return;
+  event.preventDefault();
+  prompt.value = event as InstallPrompt;
+}
 function appInstalled() { installed.value = true; prompt.value = null; notice.value = 'pwa.installed'; }
 function displayChanged() { installed.value = standalone.matches; }
 async function install() {
@@ -58,11 +63,11 @@ onUnmounted(() => {
 <template><aside class="app-availability" :aria-label="menuHelp ? undefined : t('pwa.installHelp')"><Message v-if="offline" type="warning" closable role="status">{{ t('pwa.offlineSignal') }}</Message>
     <Message v-if="notice" type="info" closable role="status">{{ t(notice) }}</Message>
     <div v-if="!menuHelp && !installed" class="installation"><Button v-if="prompt || installing" type="default" :loading="installing" :disabled="offline" @click="install"><template #icon><AppIcon name="download" /></template><span>{{ t('pwa.install') }}</span></Button>
-      <details v-remember-disclosure="'installation-help'"><DisclosureSummary icon="help">{{ t('pwa.installHelp') }}</DisclosureSummary><p>{{ t('pwa.help') }}</p><p>{{ t('pwa.connectionRequired') }}</p></details></div></aside>
+      <details v-remember-disclosure="'installation-help'"><DisclosureSummary icon="help">{{ t('pwa.installHelp') }}</DisclosureSummary><p>{{ t(secureContext ? 'pwa.help' : 'pwa.secureConnectionRequired') }}</p><p>{{ t('pwa.connectionRequired') }}</p></details></div></aside>
   <FormDialog v-if="menuHelp" :visible="helpOpen" :title="t('pwa.installHelp')" :close-label="t('pwa.closeHelp')" icon="download" size="compact" @update:visible="!$event && emit('close')" @closed="emit('closed')">
     <div class="dialog-body"><p v-if="installed">{{ t('pwa.installed') }}</p>
     <Button v-else-if="prompt || installing" type="default" :loading="installing" :disabled="offline" @click="install"><template #icon><AppIcon name="download" /></template><span>{{ t('pwa.install') }}</span></Button>
-    <p>{{ t('pwa.help') }}</p><p>{{ t('pwa.connectionRequired') }}</p></div></FormDialog></template>
+    <p>{{ t(secureContext ? 'pwa.help' : 'pwa.secureConnectionRequired') }}</p><p>{{ t('pwa.connectionRequired') }}</p></div></FormDialog></template>
 
 <style scoped>
 .app-availability { max-width: 72rem; margin: 0 auto; padding: 0 var(--space-8); }

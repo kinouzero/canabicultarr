@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/ingestion.php',
@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo('/');
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_PROTO);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReport([InstanceSettingsException::class, PlantException::class, CatalogException::class, AuthFlowException::class, UserAdministrationException::class, LocationException::class, AssetException::class, SensorException::class, EventJournalException::class, DocumentException::class, InventoryException::class, MeasurementException::class, AlertException::class, ReportException::class, NotificationException::class]);
@@ -65,3 +66,11 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json(['error' => ['code' => $code]], $status, $headers);
         });
     })->create();
+
+if (($desktopData = getenv('CANABICULTARR_DESKTOP_DATA_DIR')) !== false && $desktopData !== '') {
+    $app->useEnvironmentPath($desktopData)->loadEnvironmentFrom('desktop.env');
+    $app->useStoragePath($desktopData.'/storage');
+    $app->addAbsoluteCachePathPrefix($desktopData.'/');
+}
+
+return $app;

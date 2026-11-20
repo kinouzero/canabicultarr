@@ -115,6 +115,25 @@ class PlantWateringNeedTest extends TestCase
         $this->plantResponse($early)->assertJsonPath('data.watering.need.needed', false);
     }
 
+    public function test_imported_moisture_sensor_triggers_a_reminder_between_reports(): void
+    {
+        $plant = $this->plant(1);
+        $sensor = $this->sensor($plant);
+        $sensor->update(['expected_interval_seconds' => 60]);
+        $this->reading($sensor, 34, 1800);
+
+        $this->plantResponse($plant)
+            ->assertJsonPath('data.watering.need.needed', true)
+            ->assertJsonPath('data.watering.need.reason', 'moisture')
+            ->assertJsonPath('data.measurements.0.isStale', false);
+
+        $this->getJson('/api/v1/sites/'.$this->site->id.'/plant-dashboard?due_only=1')
+            ->assertOk()
+            ->assertJsonPath('summary.due', 1)
+            ->assertJsonPath('data.0.id', $plant->id)
+            ->assertJsonPath('data.0.watering.need.reason', 'moisture');
+    }
+
     public function test_stale_disabled_ambient_unlinked_unknown_interval_and_invalid_measurements_fall_back(): void
     {
         foreach (['stale', 'disabled', 'ambient', 'unlinked', 'unknown_interval', 'invalid', 'retired', 'maintenance', 'future'] as $case) {
@@ -195,7 +214,7 @@ class PlantWateringNeedTest extends TestCase
         $plant = $this->plant(10);
         $sensor = $this->sensor($plant);
         $sensor->update(['expected_interval_seconds' => 10]);
-        $this->reading($sensor, 80, 120);
+        $this->reading($sensor, 80, 3600);
         $this->plantResponse($plant)->assertJsonPath('data.watering.need.needed', false);
         $this->travelTo(now()->addMicrosecond());
         $this->plantResponse($plant)->assertJsonPath('data.watering.need.reason', 'elapsed');

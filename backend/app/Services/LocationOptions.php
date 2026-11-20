@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Room;
 use App\Models\Site;
+use App\Models\User;
 use App\Models\Zone;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -39,6 +40,20 @@ class LocationOptions
 
         return $query->orderBy('site_key')->orderBy('site_id')->orderBy('room_key')->orderBy('room_id')
             ->orderBy('zone_key')->orderBy('id')->paginate(CollectionPagination::size($criteria), ['*'], 'page', $criteria['page'] ?? 1);
+    }
+
+    public function offlineChoices(User $actor, array $siteIds, int $limit): array
+    {
+        $candidates = $this->query()->whereIn('site_id', $siteIds)
+            ->orderBy('site_key')->orderBy('site_id')->orderBy('room_key')->orderBy('room_id')
+            ->orderBy('zone_key')->orderBy('id')->limit($limit)->get();
+        $access = app(LocationAccess::class);
+        $access->prepare($actor, $candidates);
+
+        return $candidates->filter(fn ($row) => $access->allows($actor, ['type' => $row->kind, 'id' => $row->id]))
+            ->map(fn ($row) => ['type' => $row->kind, 'id' => $row->id,
+                'name' => implode(' › ', array_filter([$row->site_name, $row->room_name, $row->zone_name], fn ($name) => $name !== null))])
+            ->values()->all();
     }
 
     public function find(string $kind, string $id): object

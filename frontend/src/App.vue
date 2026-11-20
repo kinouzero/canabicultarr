@@ -10,6 +10,9 @@ import activationFr from './locales/fr/account-activation.json';
 import AppIcon from './components/AppIcon.vue';
 import OidcProviderIcon from './components/OidcProviderIcon.vue';
 import ListActionButton from './components/ListActionButton.vue';
+import { createOfflineSync, offlineSyncKey } from './lib/offline-sync';
+import OfflineSyncNotice from './components/OfflineSyncNotice.vue';
+import { clearOfflineSites, readOfflineState } from './lib/offline-sites.js';
 import { loadUiPreferences, clearUiPreferences } from './lib/ui-preferences';
 import { insightPreferenceScope } from './lib/insight-preferences';
 import PageTitle from './components/PageTitle.vue';
@@ -40,6 +43,7 @@ import type { PlantListScope } from './api/plants';
 import type { DashboardModule } from './api/dashboard';
 import type { SecurityResult } from './api/accountSecurity';
 import AppAvailability from './components/AppAvailability.vue';
+import FormDialog from './components/FormDialog.vue';
 import AppNavigation from './components/AppNavigation.vue';
 import LanguagePicker from './components/LanguagePicker.vue';
 import WorkspaceTabs from './components/WorkspaceTabs.vue';
@@ -108,6 +112,8 @@ const MqttSources = defineAsyncComponent(() => import('./pages/integrations/Mqtt
 const AccessProfiles = defineAsyncComponent(() => import('./pages/administration/AccessProfiles.vue'));
 const NotificationPreferences = defineAsyncComponent(() => import('./pages/account/NotificationPreferences.vue'));
 const AccountProfile = defineAsyncComponent(() => import('./pages/account/AccountProfile.vue'));
+const MobilePairingConfirmation = defineAsyncComponent(() => import('./pages/account/MobilePairingConfirmation.vue'));
+const mobilePairingCode = ref('');
 const AccountSecurity = defineAsyncComponent(() => import('./pages/account/AccountSecurity.vue'));
 const accountProfile = ref<InstanceType<typeof AccountProfile> | null>(null);
 const accountSecurity = ref<InstanceType<typeof AccountSecurity> | null>(null);
@@ -133,6 +139,8 @@ onMounted(async () => { try { applyBranding(await instanceSettingsApi.branding()
 watch(locale, value => { document.documentElement.lang = value; }, { immediate: true });
 const mode = ref<'loading' | 'setup' | 'register' | 'login' | 'account' | 'error'>('loading');
 const user = ref<AuthUser | null>(null);
+const offlineSync = createOfflineSync(() => mode.value === 'account' ? user.value?.id : undefined);
+provide(offlineSyncKey, offlineSync);
 const feedback = useFeedback();
 watch(() => user.value?.id, () => feedback.clear());
 provide(insightPreferenceScope, computed(() => user.value?.id ?? 'anonymous'));
@@ -172,6 +180,7 @@ function showError(cause: unknown) {
       panel.value = 'home';
 
       user.value = null;
+      void discardOfflineDirectory();
       mode.value = 'login';
     }
   }
@@ -196,6 +205,7 @@ async function load() {
     oidcNotice.value = oidc.result === 'linked';
     if (oidc.result && oidc.result !== 'linked') error.value = errorKey(oidc.result);
     if (status.requiresSetup) {
+      void discardOfflineDirectory();
       mode.value = 'setup';
       return;
     }
@@ -204,8 +214,12 @@ async function load() {
       await loadUiPreferences(user.value.id);
       if (startupController !== controller) return;
       mode.value = 'account';
+      void offlineSync.resume();
     } catch (cause) {
-      if (cause instanceof ApiError && cause.status === 401) mode.value = 'login';
+      if (cause instanceof ApiError && cause.status === 401) {
+        mode.value = 'login';
+        void discardOfflineDirectory();
+      }
       else throw cause;
     }
   } catch (cause) {
@@ -238,6 +252,7 @@ async function submit(kind: 'setup' | 'register' | 'login') {
     setupForm.token = setupForm.password = setupForm.password_confirmation = loginForm.password = '';
     panel.value = 'home';
     mode.value = 'account';
+    void offlineSync.resume();
   } catch (cause) {
     showError(cause);
   } finally {
@@ -268,13 +283,34 @@ async function linkOidc() {
   }
 }
 
+function discardOfflineDirectory() {
+  offlineSync.reset();
+  return window.isSecureContext && typeof indexedDB !== 'undefined' ? clearOfflineSites().catch(() => {}) : Promise.resolve();
+}
+
+const confirmOfflineLogout = ref(false);
+async function requestLogout() {
+  if (window.isSecureContext && typeof indexedDB !== 'undefined') {
+    const local = await readOfflineState().catch(() => null);
+    if (local?.outbox?.count) {
+      confirmOfflineLogout.value = true;
+      return;
+    }
+  }
+  await logout();
+}
+
 async function logout() {
+  confirmOfflineLogout.value = false;
   panel.value = 'home'; homeSiteId.value = null;
   busy.value = true;
   error.value = '';
   try {
+    await discardOfflineDirectory();
     await authApi.logout();
+    await discardOfflineDirectory();
     await router.replace('/');
+    mobilePairingCode.value = '';
     clearUiPreferences();
     void unsubscribeLocalBrowser();
     user.value = null;
@@ -289,6 +325,8 @@ async function logout() {
 }
 
 function sessionRevoked(email: string) {
+  void discardOfflineDirectory();
+  mobilePairingCode.value = '';
   panel.value = 'home'; homeSiteId.value = null;
   user.value = null;
 
@@ -467,7 +505,16 @@ function passwordRecovered(email: string) {
   setupForm.token = setupForm.password = setupForm.password_confirmation = '';
   void unsubscribeLocalBrowser();
 }
+function captureMobilePairingLink() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#mobile-pairing=')) return false;
+  const code = hash.slice('#mobile-pairing='.length);
+  if (window.location.protocol === 'https:' && window.isSecureContext && /^[A-Za-z0-9_-]{43}$/.test(code)) mobilePairingCode.value = code;
+  void router.replace({ hash: '' });
+  return true;
+}
 function captureRecoveryLink() {
+  if (captureMobilePairingLink()) return;
   if (window.location.hash.startsWith('#confirm-email=')) {
     confirmationPurpose.value = 'email-change'; activationGeneration.value++;
     activationToken.value = window.location.hash.slice('#confirm-email='.length) || 'invalid'; activationEmail.value = '';
@@ -488,16 +535,24 @@ function captureRecoveryLink() {
   loginForm.password = setupForm.token = setupForm.password = setupForm.password_confirmation = '';
 }
 watch(() => mode.value, value => { if (value !== 'account') showInstallationHelp.value = false; });
-onMounted(() => { window.addEventListener('hashchange', captureRecoveryLink); if (!showRecovery.value) void load(); });
-onUnmounted(() => { startupController?.abort(); window.removeEventListener('hashchange', captureRecoveryLink); });
+onMounted(() => {
+  captureMobilePairingLink();
+  window.addEventListener('hashchange', captureRecoveryLink);
+  if (!showRecovery.value) void load();
+});
+onUnmounted(() => {
+  startupController?.abort();
+  window.removeEventListener('hashchange', captureRecoveryLink);
+});
 </script>
 
 <template><div class="app-shell" :class="{ authenticated: mode === 'account' && user && !showRecovery && !showActivation, 'startup-screen': startupScreen, 'public-screen': !startupScreen && (mode !== 'account' || showRecovery || showActivation) }"><a class="skip-link" href="#main-content">{{ t('navigation.skip') }}</a>
-    <AppNavigation :user-id="user?.id ?? ''" @access-lost="accessLost" v-if="mode === 'account' && user && !showRecovery && !showActivation" :active="activeWorkspace?.id === 'profile' ? 'account' : panel" :groups="navigation" :name="user.name" :avatar-url="user.avatarUrl" :busy="busy" @select="navigate" @logout="logout" @installation-help="showInstallationHelp = true" />
+    <AppNavigation :user-id="user?.id ?? ''" @access-lost="accessLost" v-if="mode === 'account' && user && !showRecovery && !showActivation" :active="activeWorkspace?.id === 'profile' ? 'account' : panel" :groups="navigation" :name="user.name" :avatar-url="user.avatarUrl" :busy="busy" @select="navigate" @logout="requestLogout" @installation-help="showInstallationHelp = true" />
     <header v-if="!startupScreen" class="app-header"><div v-if="mode === 'account' && user && !showRecovery && !showActivation" id="header-navigation" class="header-menu" /><div class="header-context"><div class="header-brand"><h1><button v-if="mode === 'account' && user && !showRecovery && !showActivation" type="button" class="home-title" :aria-label="siteBranding.siteTitle" data-testid="header-home" :disabled="busy" @click="navigate('home')"><BrandMark /><span class="brand-copy"><span class="site-title">{{ siteBranding.siteTitle }}</span><small v-if="siteBranding.siteSubtitle" class="site-subtitle">{{ siteBranding.siteSubtitle }}</small></span></button><span v-else class="custom-brand"><BrandMark /><span class="site-title">{{ siteBranding.siteTitle }}</span></span></h1><small v-if="siteBranding.siteSubtitle && (mode !== 'account' || !user || showRecovery || showActivation)" class="site-subtitle">{{ siteBranding.siteSubtitle }}</small></div><AppBreadcrumb v-if="mode === 'account' && !showRecovery && !showActivation" :items="breadcrumb" @select="navigate" /></div></header>
     <main id="main-content" ref="mainContent" tabindex="-1" :class="{ 'wide-main': mode === 'account' && !showRecovery && !showActivation }"><Message v-if="emailChangeSuccess && !showActivation" closable type="success" role="status">{{ t('emailChange.success') }}</Message>
       <Message v-if="mode === 'account' && oidcNotice" closable type="success">{{ t('auth.oidcLinkSuccess', { provider: oidcProviderName }) }}</Message>
       <Message v-if="mode === 'account' && panel !== 'account' && error" closable type="error" role="alert">{{ t(error, { provider: oidcProviderName }) }}</Message>
+      <OfflineSyncNotice v-if="mode === 'account' && panel !== 'security' && !showRecovery && !showActivation" />
       <div class="workspace-frame" :class="{ 'module-workspace profile-workspace': mode === 'account' && !showRecovery && !showActivation && activeWorkspace?.id === 'profile' }"><WorkspaceTabs :key="activeWorkspace?.id" v-if="mode === 'account' && user && !showRecovery && !showActivation && activeWorkspace" :workspace="activeWorkspace" :active="panel" :show-tabs="activeWorkspace.id === 'profile'" :show-subpanels="!['users', 'profiles', 'mqtt', 'http', 'sources', 'instanceSettings', 'cycleSettings', 'catalogs', 'notifications'].includes(panel)" @select="navigate($event, false)"><template v-if="activeWorkspace.id === 'profile'" #actions><template v-if="panel === 'account' && accountProfile"><Button v-if="oidcEnabled && !user.oidcLinked" type="default" :loading="busy" @click="linkOidc" :aria-label="t('auth.oidcLink', { provider: oidcProviderName })" :title="t('auth.oidcLink', { provider: oidcProviderName })" class="list-action-button"><template #icon><AppIcon name="plug" /></template></Button>
          <ListActionButton icon="edit" :label="t('accountProfile.edit')" :disabled="busy" @click="accountProfile.edit()" /></template>
         <ListActionButton v-else-if="panel === 'security'" icon="refresh" :label="t('accountSecurity.reload')" :loading="accountSecurity?.loading" :disabled="!accountSecurity || accountSecurity.busy" @click="accountSecurity?.reload()" />
@@ -520,7 +575,7 @@ onUnmounted(() => { startupController?.abort(); window.removeEventListener('hash
       <HttpIngestion embedded v-else-if="showHttpIngestion && mode === 'account' && user" @close="showHttpIngestion = false" @access-lost="accessLost"><template #navigation><WorkspaceSectionTabs v-if="activeWorkspace" :workspace="activeWorkspace" :active="panel" @select="navigate($event, false)" /></template></HttpIngestion>
       <AccessProfiles embedded v-else-if="showAccessProfiles && mode === 'account' && user" @close="showAccessProfiles = false" @access-lost="accessLost"><template #navigation><UserManagementTabs active="profiles" @select="navigate($event, false)" /></template></AccessProfiles>
       <NotificationPreferences ref="notificationPreferences" v-else-if="panel === 'accountNotifications' && mode === 'account' && user" @access-lost="accessLost" />
-      <AccountSecurity ref="accountSecurity" v-else-if="showAccountSecurity && mode === 'account' && user" :oidc-linked="user.oidcLinked" @secured="accountSecured" @access-lost="accessLost" />
+      <AccountSecurity ref="accountSecurity" v-else-if="showAccountSecurity && mode === 'account' && user" :oidc-linked="user.oidcLinked" :email="user.email" @secured="accountSecured" @access-lost="accessLost" />
       <InstallationDashboard embedded :can-manage="canManage('plants.manage')" :can-manage-integrations="canManage('integrations.manage')" v-else-if="showDashboard && mode === 'account' && user" @close="showDashboard = false" @open="openDashboardModule" @access-lost="accessLost" />
       <MonitoringAlerts embedded v-else-if="showAlerts && mode === 'account' && user" :can-manage="canManage('alerts.manage')" @close="showAlerts = false" @access-lost="accessLost" />
       <MeasurementWorkspace embedded v-else-if="showMeasurements && mode === 'account' && user" @close="showMeasurements = false" @access-lost="accessLost" />
@@ -559,6 +614,7 @@ onUnmounted(() => { startupController?.abort(); window.removeEventListener('hash
           <div v-if="mode === 'setup' && oidcEnabled" class="login-options"><hr class="auth-divider" />
             <Button attr-type="button" :loading="busy" class="submit-button" @click="setupOidc" type="primary"><template #icon><OidcProviderIcon :name="siteBranding.oidcProviderIcon" /></template><span>{{ t('auth.oidcSetup', { provider: oidcProviderName }) }}</span></Button>
             <small>{{ t('auth.oidcSetupHelp') }}</small></div>
+          <Message v-if="mode === 'login' && mobilePairingCode" type="info" role="status">{{ t('mobilePairing.signInHelp') }}</Message>
           <form v-if="mode === 'login' && localEnabled" @submit.prevent="submit('login')" novalidate><div class="field"><label for="login-email">{{ t('auth.email') }}</label>
               <InputText placeholder="" v-model:value="loginForm.email" :status="!!fields.email ? 'error' : undefined" :disabled="busy" :input-props="{ 'id': 'login-email', type: 'email', 'autocomplete': 'username', 'aria-describedby': 'login-email-error' }"></InputText>
               <small v-if="fields.email" id="login-email-error" class="field-error">{{ t(fields.email) }}</small></div>
@@ -572,6 +628,12 @@ onUnmounted(() => { startupController?.abort(); window.removeEventListener('hash
             <a v-if="oidcEnabled" class="oidc-login" href="/api/v1/auth/oidc/redirect"><OidcProviderIcon :name="siteBranding.oidcProviderIcon" />{{ t('auth.oidcLogin', { provider: oidcProviderName }) }}</a></div>
           <Button v-if="mode === 'register'" type="default" text :disabled="busy" class="recovery-link" @click="mode = 'login'; error = ''; fields = {}; setupForm.password = setupForm.password_confirmation = ''"><span>{{ t('auth.backToLogin') }}</span></Button>
           <Message v-if="(mode === 'login' || mode === 'setup') && !localEnabled && !oidcEnabled" type="warning" closable>{{ t('auth.noSignIn') }}</Message></template></Card></div></div></main>
+    <FormDialog v-if="confirmOfflineLogout" :visible="true" icon="logout" size="compact"
+      :title="t('offlineJournal.logout')" :close-label="t('actions.cancel')" @update:visible="!$event && (confirmOfflineLogout = false)">
+      <p>{{ t('offlineJournal.logoutHelp') }}</p>
+      <template #footer><Button type="error" @click="logout">{{ t('offlineJournal.logout') }}</Button></template>
+    </FormDialog>
+    <MobilePairingConfirmation v-if="mode === 'account' && user && mobilePairingCode && !showRecovery && !showActivation" :key="mobilePairingCode" :code="mobilePairingCode" :email="user.email" @close="mobilePairingCode = ''" />
     <SensorHistory v-if="mode === 'account' && plantHistory.sensor.value" :sensor-id="plantHistory.sensor.value.id" :name="plantHistory.sensor.value.name" @close="plantHistory.close" @access-lost="accessLost" />
     <StrainCatalog v-if="mode === 'account' && user && linkedStrainId" :key="linkedStrainId" detail-only :initial-strain-id="linkedStrainId" :can-manage-strains="canManage('strains.manage')" :can-manage-plants="canManage('plants.manage')" @close="closeLinkedStrain" @access-lost="linkedStrainId = ''; accessLost($event)" />
     <FilePreview v-if="mode === 'account' && attachmentPreview.record.value" :file="attachmentPreview.record.value" @close="attachmentPreview.close()" @access-lost="accessLost" />

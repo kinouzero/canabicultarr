@@ -82,7 +82,7 @@ class DocumentThumbnail
         if (! $image) {
             return null;
         }
-        if ($info[2] === IMAGETYPE_JPEG) {
+        if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
             $metadata = fopen('php://temp', 'w+b');
             try {
                 fwrite($metadata, $bytes);

@@ -51,7 +51,7 @@ class DocumentLibrary
         return $query->orderByDesc('id')->paginate(CollectionPagination::size($criteria), ['*'], 'page', $criteria['page'] ?? 1);
     }
 
-    public function upload(User $actor, array $data, UploadedFile $file): Document
+    public function upload(User $actor, array $data, UploadedFile $file, ?MobileAttachmentUpload $mobile = null): Document
     {
         // Service callers must enforce the same boundary as HTTP uploads.
         [$format, $extension, $mime] = DocumentFile::validatedMetadata($file);
@@ -63,18 +63,26 @@ class DocumentLibrary
         $path = $id.'/original.'.$extension;
         $attempted = false;
         try {
-            $document = DB::transaction(function () use ($actor, $data, $file, $format, $mime, $disk, $id, $path, &$attempted) {
+            $document = DB::transaction(function () use ($actor, $data, $file, $format, $mime, $disk, $id, $path, $mobile, &$attempted) {
                 $current = User::whereKey($actor->id)->lockForUpdate()->firstOrFail();
                 Gate::forUser($current)->authorize('create', Document::class);
-                $context = $this->context->resolve($data['subject'] ?? null);
-                $this->context->authorize($current, $context['subject_snapshot']);
                 $sha = hash_file('sha256', $file->getRealPath());
                 if ($sha === false) {
                     throw new DocumentException('documents.errors.storageUnavailable', 503);
                 }
+                $name = $this->filename($file->getClientOriginalName());
+                if ($mobile) {
+                    $prepared = app(LocationAccess::class)->run($current, fn () => $mobile->prepare($current, $sha, $name));
+                    if ($prepared instanceof Document) {
+                        return $prepared;
+                    }
+                    $data = $prepared;
+                }
+                $context = app(LocationAccess::class)->run($current, fn () => $this->context->resolve($data['subject'] ?? null));
+                $this->context->authorize($current, $context['subject_snapshot']);
                 $document = new Document(Arr::only($data, ['title', 'description']));
                 $document->folder_id = app(DocumentFolders::class)->resolve($data['folder_id'] ?? null);
-                $document->forceFill(['id' => $id, 'disk' => $disk, 'path' => $path, 'original_name' => $this->filename($file->getClientOriginalName()), 'format' => $format, 'media_type' => $mime, 'size_bytes' => $file->getSize(), 'sha256' => $sha,
+                $document->forceFill(['id' => $id, 'disk' => $disk, 'path' => $path, 'original_name' => $name, 'format' => $format, 'media_type' => $mime, 'size_bytes' => $file->getSize(), 'sha256' => $sha,
                     'uploaded_by' => $current->id, 'uploader_uuid' => $current->uuid, ...$context]);
                 $stream = fopen($file->getRealPath(), 'rb');
                 if ($stream === false) {
@@ -91,6 +99,7 @@ class DocumentLibrary
                     fclose($stream);
                 }
                 $document->save();
+                $mobile?->record($current, $document, $sha, $name);
 
                 return $document;
             });
@@ -106,7 +115,9 @@ class DocumentLibrary
             }
             throw $exception;
         }
-        Log::notice('document.uploaded', ['actor_uuid' => $actor->uuid, 'document_uuid' => $id]);
+        if ($attempted) {
+            Log::notice('document.uploaded', ['actor_uuid' => $actor->uuid, 'document_uuid' => $id]);
+        }
 
         return $document->load('uploader:id,uuid,name');
     }

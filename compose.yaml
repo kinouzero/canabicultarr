@@ -2,7 +2,7 @@ name: canabicultarr
 
 services:
   app:
-    image: ${APP_IMAGE:-ghcr.io/kinouzero/canabicultarr:0.1.0}
+    image: ${APP_IMAGE:-ghcr.io/kinouzero/canabicultarr:0.2.0}
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-./.env}
@@ -11,9 +11,14 @@ services:
       APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-8420}}
       APP_DEV_SERVER: "false"
       # Bluetooth is configured through .env, not an additional Compose file.
-      # Linux: BLUETOOTH_ENABLED=true, BLUETOOTH_TRANSPORT=bluez,
-      # BLUETOOTH_ADAPTER=hci0 and DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket.
-      # Mac/Windows: BLUETOOTH_ENABLED=true, BLUETOOTH_TRANSPORT=relay,
+      # Linux:
+      # BLUETOOTH_ENABLED=true
+      # BLUETOOTH_TRANSPORT=bluez,
+      # BLUETOOTH_ADAPTER=hci0
+      # DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+      # Mac/Windows:
+      # BLUETOOTH_ENABLED=true
+      # BLUETOOTH_TRANSPORT=relay
       # with the native relay URL/token configured through .env or Settings.
     ports:
       - "${APP_PORT:-8420}:8420"

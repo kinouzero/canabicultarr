@@ -1,8 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
+const browserName = process.env.PLAYWRIGHT_PWA_BROWSER === 'webkit' ? 'webkit' : 'chromium';
+
 export default defineConfig({
   testDir: './tests/pwa',
   testMatch: '**/*.spec.ts',
+  grep: browserName === 'webkit' ? /@cross-engine/ : undefined,
   workers: 1,
   retries: 0,
   timeout: 30_000,
@@ -11,10 +14,11 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:18081',
     // Full Chromium honors notification permissions; the headless shell does not.
-    channel: 'chromium',
+    browserName,
+    channel: browserName === 'chromium' ? 'chromium' : undefined,
     serviceWorkers: 'allow',
     trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off',
-    launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH },
+    launchOptions: browserName === 'chromium' ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {},
   },
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1 --port 18081 --strictPort',

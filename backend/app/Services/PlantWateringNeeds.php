@@ -10,9 +10,15 @@ use Illuminate\Support\Collection;
 
 class PlantWateringNeeds
 {
-    public const MINIMUM_FRESHNESS_SECONDS = 120;
+    // Substrate probes can report less often than an integration polls.
+    public const MINIMUM_FRESHNESS_SECONDS = 3600;
 
     public const FRESHNESS_INTERVAL_MULTIPLIER = 2;
+
+    public static function freshnessSeconds(int $expectedIntervalSeconds): int
+    {
+        return max(self::MINIMUM_FRESHNESS_SECONDS, $expectedIntervalSeconds * self::FRESHNESS_INTERVAL_MULTIPLIER);
+    }
 
     public function prepare(Collection $plants): void
     {
@@ -49,7 +55,7 @@ class PlantWateringNeeds
                         return null;
                     }
                     $value = (float) $reading->value;
-                    $freshAfter = $now->subSeconds(max(self::MINIMUM_FRESHNESS_SECONDS, $sensor->expected_interval_seconds * self::FRESHNESS_INTERVAL_MULTIPLIER));
+                    $freshAfter = $now->subSeconds(self::freshnessSeconds($sensor->expected_interval_seconds));
                     if (! is_finite($value) || $value < 0 || $value > 100 || $reading->observed_at->lessThan($freshAfter)
                         || ($lastWatering && $reading->observed_at->lessThanOrEqualTo($lastWatering))) {
                         return null;

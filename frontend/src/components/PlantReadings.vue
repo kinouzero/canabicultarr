@@ -73,7 +73,7 @@ function timestamp(reading: PlantMeasurement): string { return reading.observedA
     </span>
    </component>
   </span>
-  <button v-if="hiddenCount" type="button" class="readings-more" :aria-expanded="expanded" :aria-controls="gridId" @click="expanded = !expanded"><AppIcon name="chevron" class="button-icon" />{{ expanded ? t('plants.measurements.less') : t('plants.measurements.more', { count: hiddenCount }) }}</button>
+  <button v-if="hiddenCount" type="button" class="readings-more" :aria-expanded="expanded" :aria-controls="gridId" @click="expanded = !expanded"><AppIcon name="chevron" class="button-icon app-disclosure-icon" />{{ expanded ? t('plants.measurements.less') : t('plants.measurements.more', { count: hiddenCount }) }}</button>
  </component>
  <SensorHistory v-if="selected" :sensor-id="selected.sensorId" :name="selected.sensorName" @close="selected = null" @access-lost="selected = null; emit('accessLost', $event)" />
 </template>

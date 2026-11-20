@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
       return new Response(fallback.body, { status: 503, headers: {
         'Content-Type': 'text/html; charset=UTF-8',
         'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
+        'Content-Security-Policy': "default-src 'none'; script-src '__OFFLINE_SCRIPT_HASH__'; style-src 'unsafe-inline'; img-src blob:; base-uri 'none'; form-action 'none'",
         'Referrer-Policy': 'no-referrer',
       } });
     }

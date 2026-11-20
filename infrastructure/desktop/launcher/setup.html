@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="{{.Language}}">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canabicultarr Desktop</title>
+<link rel="icon" href="{{.Route}}logo">
+<style>
+:root{color-scheme:light dark;--forest:{{.Colors.forest_green}};--celadon:{{.Colors.celadon}};--canvas:{{.Colors.light_background}};--dark:{{.Colors.dark_background}};--text:var(--forest);--page:var(--canvas);--button:var(--forest);--button-text:white}
+@media(prefers-color-scheme:dark){:root{--text:var(--celadon);--page:var(--dark);--button:var(--celadon);--button-text:var(--forest)}}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font:1rem/1.5 system-ui,sans-serif}
+main{width:min(100% - 2rem,42rem);margin:3rem auto;padding:clamp(1rem,5vw,2rem);background:color-mix(in srgb,var(--page) 95%,var(--text));border-radius:1rem}
+header{display:flex;gap:1rem;align-items:center;margin-bottom:1.25rem}header img{width:4rem;height:4rem;padding:.35rem;border-radius:.85rem;background:var(--celadon)}h1{font-size:clamp(1.3rem,4vw,1.9rem);margin:0;line-height:1.2}
+form{margin:0}fieldset{border:0;padding:0;margin:0;display:grid;gap:.8rem;grid-template-columns:repeat(2,minmax(0,1fr))}label{display:grid;gap:.25rem}
+input,select{width:100%;padding:.55rem .65rem;border:1px solid color-mix(in srgb,var(--text) 35%,transparent);border-radius:.5rem;font:inherit;background:var(--page);color:inherit}
+.actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-top:1rem}button,.button{border:1px solid currentColor;border-radius:.55rem;background:transparent;color:inherit;padding:.5rem .75rem;font:inherit;text-decoration:none;cursor:pointer}.primary{background:var(--button);color:var(--button-text);border-color:var(--button)}
+input[type=checkbox]{width:auto;justify-self:start}details form{margin-top:.75rem;display:grid;gap:.65rem}summary{cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";display:inline-block;width:.45em;height:.45em;margin-inline:.2em .6em;border:solid currentColor;border-width:0 .1em .1em 0;vertical-align:.15em;transform:rotate(-45deg)}
+details[open]>summary::before{transform:rotate(45deg)}
+a{color:inherit}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid currentColor;outline-offset:2px}.notice{padding:.65rem;border:1px solid currentColor;border-radius:.5rem;overflow-wrap:anywhere}
+@media(max-width:36rem){main{margin:1rem auto}fieldset{grid-template-columns:minmax(0,1fr)}}
+</style>
+<main>
+<header><img src="{{.Route}}logo" alt=""><h1>{{if eq .Step "configuration"}}{{.Text.settings}}{{else if eq .Step "administrator"}}{{.Text.administrator}}{{else if eq .Step "stopped"}}{{.Text.stopped}}{{else}}{{.Text.ready}}{{end}}</h1></header>
+{{if .Error}}<p class="notice" role="alert">{{.Error}}</p>{{end}}
+{{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+{{if eq .Step "configuration"}}
+<form method="post">
+<fieldset>
+<legend>{{.Text.settingsGeneral}}</legend>
+<label>{{.Text.port}}<input name="port" type="number" min="1024" max="65535" value="{{.Settings.Port}}" required></label>
+</fieldset>
+<fieldset>
+<legend>{{.Text.settingsMail}}</legend>
+<label>{{.Text.host}}<input name="host" value="{{.Settings.Host}}" required></label>
+<label>{{.Text.smtpPort}}<input name="smtpPort" type="number" min="1" max="65535" value="{{.Settings.SMTPPort}}" required></label>
+<label>{{.Text.sender}}<input name="sender" type="email" value="{{.Settings.Sender}}" required></label>
+<label>{{.Text.senderName}}<input name="senderName" value="{{.Settings.SenderName}}"></label>
+<label>{{.Text.username}}<input name="username" value="{{.Settings.Username}}"></label>
+<label>{{.Text.password}}<input name="password" type="password" autocomplete="new-password"></label>
+</fieldset>
+<details class="actions" {{if or .Settings.LANEnabled .Settings.LANFingerprint}}open{{end}}>
+<summary>{{.Text.lan}}</summary>
+<p>{{.Text.lanHelp}}</p>
+<fieldset>
+<label>{{.Text.lanEnabled}}<input name="lanEnabled" value="1" type="checkbox" {{if .Settings.LANEnabled}}checked{{end}}></label>
+<label>{{.Text.lanBind}}<input name="lanBind" value="{{.Settings.LANBind}}"></label>
+<label>{{.Text.lanHost}}<input name="lanHost" value="{{.Settings.LANHost}}"></label>
+<label>{{.Text.lanPort}}<input name="lanPort" type="number" min="1024" max="65535" value="{{.Settings.LANPort}}"></label>
+</fieldset>
+<details class="actions">
+<summary>{{.Text.customCertificate}}</summary>
+<fieldset>
+<label>{{.Text.lanCert}}<input name="lanCert" value="{{.Settings.LANCert}}"></label>
+<label>{{.Text.lanKey}}<input name="lanKey" value="{{.Settings.LANKey}}"></label>
+</fieldset>
+</details>
+{{if .Settings.Configured}}
+{{if .Settings.LANCert}}
+<details class="actions">
+<summary>{{.Text.replaceCertificate}}</summary>
+<p>{{.Text.replaceCertificateHelp}}</p>
+<button name="action" value="replace-certificate" formnovalidate>{{.Text.replaceCertificate}}</button>
+</details>
+{{else}}
+<div class="actions"><button name="action" value="generate-certificate" formnovalidate>{{.Text.generateCertificate}}</button></div>
+{{end}}
+<details class="actions">
+<summary>{{.Text.defaultCertificate}}</summary>
+<p>{{.Text.defaultCertificateHelp}}</p>
+<button name="action" value="default-certificate" formnovalidate>{{.Text.defaultCertificate}}</button>
+</details>
+{{if .Settings.LANCert}}
+<details class="actions">
+<summary>{{.Text.clearCertificate}}</summary>
+<p>{{.Text.clearCertificateHelp}}</p>
+<button name="action" value="remove-certificate" formnovalidate>{{.Text.clearCertificate}}</button>
+</details>
+{{end}}
+{{template "certificateHelp" .}}
+{{end}}
+</details>
+<div class="actions"><button class="primary" name="action" value="save">{{.Text.save}}</button>
+<button name="action" value="gmail" formnovalidate>{{.Text.gmail}}</button>
+{{if eq .Settings.Host "smtp.gmail.com"}}<a href="https://support.google.com/accounts/answer/185833">{{.Text.gmailHelp}}</a>{{end}}</div>
+</form>
+<details class="actions">
+<summary>{{if .Settings.Configured}}{{.Text.backup}}{{else}}{{.Text.restore}}{{end}}</summary>
+{{if .Settings.Configured}}
+<form method="post" action="{{.Route}}backup">
+{{else}}
+<form method="post" action="{{.Route}}restore" enctype="multipart/form-data">
+<label>{{.Text.archive}}<input type="file" name="archive" accept=".zip" required></label>
+{{end}}
+<label>{{.Text.archivePassword}}<input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+<div class="actions"><button>{{if .Settings.Configured}}{{.Text.backup}}{{else}}{{.Text.restore}}{{end}}</button></div>
+</form>
+</details>
+{{if .Settings.Configured}}
+<details class="actions">
+<summary>{{.Text.schedule}}</summary>
+<form method="post">
+<fieldset>
+<label>{{.Text.frequency}}<select name="frequency">
+<option value="off" {{if eq .Settings.BackupSchedule.Frequency "off"}}selected{{end}}>{{.Text.off}}</option>
+<option value="daily" {{if eq .Settings.BackupSchedule.Frequency "daily"}}selected{{end}}>{{.Text.daily}}</option>
+<option value="weekly" {{if eq .Settings.BackupSchedule.Frequency "weekly"}}selected{{end}}>{{.Text.weekly}}</option>
+</select></label>
+<label>{{.Text.retention}}<input type="number" name="keep" value="{{.Settings.BackupSchedule.Keep}}" min="1" max="90" required></label>
+<label>{{.Text.destination}}<input name="directory" value="{{.Settings.BackupSchedule.Directory}}"></label>
+<label>{{.Text.archivePassword}}<input name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" {{if .Settings.BackupSchedule.HasPassword}}placeholder="{{.Text.passwordStored}}"{{end}}></label>
+</fieldset>
+{{with .Settings.BackupSchedule.LastBackup}}<p>{{$.Text.lastBackup}} · {{.}}</p>{{end}}
+{{if .Settings.BackupSchedule.Failed}}<p role="status">{{.Text.scheduleFailed}}</p>{{end}}
+<div class="actions"><button name="action" value="schedule">{{.Text.scheduleSave}}</button></div>
+</form>
+</details>
+{{end}}
+{{else if eq .Step "administrator"}}
+<form method="post"><fieldset>
+<label>{{.Text.name}}<input name="name" autocomplete="name" required maxlength="120"></label>
+<label>{{.Text.email}}<input type="email" name="email" autocomplete="email" required maxlength="254"></label>
+<label>{{.Text.accountPassword}}<input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+<label>{{.Text.confirmation}}<input type="password" name="confirmation" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+</fieldset><div class="actions"><button class="primary" name="action" value="administrator">{{.Text.create}}</button></div></form>
+{{else if eq .Step "ready"}}
+{{if .Email}}<p class="notice">{{.Text.activation}} <strong>{{.Email}}</strong></p>{{end}}
+<a class="button primary" href="{{or .Settings.LANURL .Origin}}">{{.Text.open}}</a>
+{{template "certificateHelp" .}}
+{{end}}
+{{if and (ne .Step "configuration") (ne .Step "stopped")}}
+<form method="post" class="actions"><button name="action" value="edit">{{.Text.edit}}</button><button name="action" value="stop">{{.Text.stop}}</button></form>
+{{end}}
+{{if and .Settings.Configured (ne .Step "stopped")}}
+<div class="actions"><a href="{{.Route}}runtime-log">{{.Text.runtimeLog}}</a></div>
+{{end}}
+</main>
+</html>
+
+
+{{define "certificateHelp"}}
+{{if .Settings.LANFingerprint}}
+<details class="actions">
+<summary>{{.Text.trustCertificate}}</summary>
+<p>{{.Text.trustDesktopHelp}}</p>
+<h3>{{.Text.trustIphoneTitle}}</h3>
+<a class="button" href="{{.Route}}trust-profile">{{.Text.trustIphoneProfile}}</a>
+<ol>
+<li>{{.Text.trustIphoneInstall}}</li>
+<li>{{.Text.trustIphoneEnable}}{{if .Settings.LANAuthority}}<br><strong>{{.Settings.LANAuthority}}</strong>{{end}}</li>
+</ol>
+<p>{{.Text.trustIphoneNote}}</p>
+<p>{{.Text.trustAndroidHelp}}</p>
+<a class="button" href="{{.Route}}trust-certificate">{{.Text.downloadTrust}}</a>
+<p class="notice">SHA-256 · {{.Settings.LANFingerprint}}</p>
+<p>{{.Text.lanTrustHelp}}</p>
+</details>
+{{end}}
+{{if or .Settings.LANFingerprint .Settings.LANPreviousFingerprint}}
+<details class="actions">
+<summary>{{.Text.removeCertificate}}</summary>
+{{if .Settings.LANPreviousFingerprint}}
+<p><strong>{{.Text.previousCertificate}}</strong> {{.Settings.LANPreviousAuthority}}</p>
+<p class="notice">SHA-256 · {{.Settings.LANPreviousFingerprint}}</p>
+{{end}}
+<p>{{.Text.removeDesktopHelp}}</p>
+<p>{{.Text.removeIphoneHelp}}</p>
+<p>{{.Text.removeAndroidHelp}}</p>
+<p>{{.Text.removePairingHelp}}</p>
+</details>
+{{end}}
+{{end}}

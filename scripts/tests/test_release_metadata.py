@@ -1,7 +1,10 @@
 """Validate release boundaries without publishing or making network requests."""
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 spec = importlib.util.spec_from_file_location('release_metadata', Path(__file__).parents[1] / 'release-metadata.py')
@@ -40,6 +43,16 @@ class ReleaseMetadataTest(unittest.TestCase):
         updated = release.compose_with_image(contents, new_version)
         self.assertIn(f'image: ${{APP_IMAGE:-{release.DEFAULT_GHCR}:{new_version}}}', updated)
         self.assertEqual(release.compose_with_image(updated, version), contents)
+
+    def test_installer_preflight_reports_only_the_manifest_version_for_the_matching_tag(self):
+        version = json.loads((release.ROOT / 'frontend/package.json').read_text())['version']
+        command = [sys.executable, str(release.ROOT / 'scripts/release-metadata.py'), '--check-tag']
+        result = subprocess.run(command, capture_output=True, text=True, env={**os.environ, 'RELEASE_TAG': 'v' + version})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, version + '\n')
+        result = subprocess.run(command, capture_output=True, text=True, env={**os.environ, 'RELEASE_TAG': 'v' + version + '.1'})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, '')
 
     def test_published_versions_are_never_overwritten(self):
         plan = self.plan(get=lambda path: {'draft': False})

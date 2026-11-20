@@ -23,3 +23,5 @@ frontend/dist-coverage
 
 *.tar.age
 *.tar.age.part
+
+.desktop-build*

@@ -160,6 +160,34 @@ test('room and zone tiles precede galleries, retain binary zero and open sensor 
 });
 
 
+test('location channels collapse independently from the plant gallery and remember their state', async ({ page }) => {
+ const { errors, preferences } = await dashboard(page, 2, 'zone', true);
+ const room = page.locator('.home-room').first();
+ const roomTiles = room.locator(':scope > .location-readings');
+ const zone = room.locator('.home-zone').first();
+ const zoneTiles = zone.locator(':scope > .location-readings');
+ const summary = zoneTiles.locator(':scope > summary');
+ const firstTile = zoneTiles.locator('.plant-reading').first();
+ const gallery = zone.locator('.zone-gallery');
+
+ await expect(firstTile).toBeVisible();
+ await summary.focus();
+ await page.keyboard.press('Enter');
+ await expect(firstTile).toBeHidden();
+ await expect(roomTiles.locator('.plant-reading').first()).toBeVisible();
+ await expect(gallery).toBeVisible();
+ await expect.poll(() => preferences.values()['disclosures:dashboard-channels:dashboard:zone:zone-0']).toBe(false);
+
+ await page.reload();
+ await expect(summary).toBeVisible();
+ await expect(firstTile).toBeHidden();
+ await expect(gallery).toBeVisible();
+ await summary.click();
+ await expect(firstTile).toBeVisible();
+ await expect(zoneTiles.getByRole('button', { name: 'Choisir les tuiles' })).toBeVisible();
+ expect(errors).toEqual([]);
+});
+
 async function selectOnlyZoneSwitch(page: Page) {
  const dialog = page.getByRole('dialog');
  await dialog.locator('.n-base-clear').click();

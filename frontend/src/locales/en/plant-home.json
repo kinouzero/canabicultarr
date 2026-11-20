@@ -3,6 +3,7 @@
   "moveTileUp": "Move {name} up",
   "moveTileDown": "Move {name} down",
   "chooseTiles": "Choose tiles",
+  "locationChannels": "Channels",
   "tileCount": "{count} / {total} channels shown",
   "tileSelectionHelp": "Choose the channels to show here. Your choices are saved to your account for this location.",
   "title": "Your plants, at a glance",
