@@ -248,12 +248,22 @@ jobs:
             npx playwright install-deps chromium
             npx playwright screenshot --channel chromium about:blank "$RUNNER_TEMP/chromium-smoke.png"
           fi
-      - name: Build production application for PWA checks
+      - name: Build production application with source maps for PWA checks
         working-directory: frontend
-        run: npm run build
+        run: npm run build:coverage
       - name: Verify production installation and offline privacy
         working-directory: frontend
+        env:
+          APP_COVERAGE: '1'
+          APP_COVERAGE_SHARD: '1'
         run: npm run test:pwa:e2e
+      - name: Upload PWA browser coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-coverage-shard-pwa
+          path: frontend/coverage/browser/raw
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify packaged runtime
         run: sh scripts/test-container.sh
       - name: Verify development proxy
@@ -344,7 +354,7 @@ jobs:
 
   browser-coverage:
     name: Combined browser coverage
-    needs: authentication-e2e
+    needs: [authentication-e2e, runtime-e2e]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
@@ -380,6 +390,7 @@ jobs:
           coverage/shards/browser-coverage-shard-2
           coverage/shards/browser-coverage-shard-3
           coverage/shards/browser-coverage-shard-4
+          coverage/shards/browser-coverage-shard-pwa
       - name: Upload browser coverage
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -515,20 +526,17 @@ jobs:
           docker buildx build --platform "linux/$DESKTOP_ARCH" --output type=local,dest=.desktop-build \
             --build-arg "DESKTOP_VERSION=$package_version" -f infrastructure/desktop/linux/Dockerfile .
           sh infrastructure/desktop/linux/test.sh "$DESKTOP_ARCH"
-      - name: Build and verify the Windows installer
+      - name: Build the Windows installer
         if: matrix.extension == 'exe'
         run: |
           docker buildx build --platform linux/amd64 --output type=local,dest=.desktop-build \
             --build-arg "DESKTOP_VERSION=$DESKTOP_VERSION" -f infrastructure/desktop/windows/Dockerfile .
-          docker buildx build --platform linux/amd64 --target wine --load -t cana-windows-smoke:local \
-            -f infrastructure/desktop/windows/Dockerfile .
-          sh infrastructure/desktop/windows/test-wine.sh
       - name: Stage the versioned installer
         run: |
           mkdir -p "$RUNNER_TEMP/desktop"
           cp ".desktop-build/$DESKTOP_SOURCE" \
             "$RUNNER_TEMP/desktop/Canabicultarr-Desktop-$DESKTOP_VERSION-$DESKTOP_TARGET.$DESKTOP_EXTENSION"
-      - name: Upload the tested installer
+      - name: Upload installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: desktop-${{ matrix.target }}
@@ -538,9 +546,33 @@ jobs:
           overwrite: true
           retention-days: 7
 
+  desktop-windows-smoke:
+    name: Verify the installer on Windows
+    needs: desktop-installers
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the x64 installer
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: desktop-windows-x64
+          path: ${{ runner.temp }}/desktop
+      - name: Verify installation, onboarding and uninstall
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = python scripts/release-metadata.py --check-tag
+          $env:CANABICULTARR_TEST_WINDOWS_INSTALLER = Join-Path $env:RUNNER_TEMP "desktop/Canabicultarr-Desktop-$version-windows-x64.exe"
+          $env:PYTHONPATH = (Resolve-Path infrastructure/desktop).Path
+          python infrastructure/desktop/windows/test_installation.py
+
   publish:
     name: GitHub release, container images and Desktop installers
-    needs: [frontend, backend-coverage, browser-coverage, runtime-e2e, infrastructure, desktop-installers]
+    needs: [frontend, backend-coverage, browser-coverage, runtime-e2e, infrastructure, desktop-installers, desktop-windows-smoke]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 60

@@ -6,29 +6,33 @@ from pathlib import Path
 import shutil
 import subprocess
 
-prefix = Path(os.environ["WINEPREFIX"])
-local_app_data = prefix / "drive_c/users" / os.environ["USER"] / "AppData/Local"
+native = os.name == "nt"
+wine_drive = None if native else Path(os.environ["WINEPREFIX"]) / "drive_c"
+local_app_data = Path(os.environ["LOCALAPPDATA"]) if native else wine_drive / "users" / os.environ["USER"] / "AppData/Local"
 install_dir = local_app_data / "Programs/Canabicultarr"
 data_dir = local_app_data / "Canabicultarr/Data"
-installer = "/packages/Canabicultarr-Desktop-preview-win-x64.exe"
+installer = Path(os.environ.get("CANABICULTARR_TEST_WINDOWS_INSTALLER", "/packages/Canabicultarr-Desktop-preview-win-x64.exe"))
 shortcut = local_app_data.parent / "Roaming/Microsoft/Windows/Start Menu/Programs/Canabicultarr.lnk"
 os.environ["CANABICULTARR_TEST_WINDOWS_ROOT"] = str(install_dir)
 
 from test_launcher import check, verify_upgrade
 
 
-def wine(executable, *arguments, status=0):
-    result = subprocess.run(["/usr/lib/wine/wine64", str(executable), *arguments], timeout=180, check=False)
+def run_installer(executable, *arguments, status=0):
+    command = [str(executable), *arguments]
+    if not native:
+        command.insert(0, "/usr/lib/wine/wine64")
+    result = subprocess.run(command, timeout=180, check=False)
     assert result.returncode == status, f"{Path(executable).name} returned {result.returncode} instead of {status}"
 
 
 def uninstall(directory=install_dir, *, status=0):
     # NSIS normally launches a temporary copy asynchronously. Run the same copy
     # explicitly to observe its status and avoid locking the program directory.
-    temporary = Path(os.environ["HOME"]) / "uninstaller.exe"
+    temporary = Path(os.environ["RUNNER_TEMP"] if native else os.environ["HOME"]) / "uninstaller.exe"
     shutil.copy2(install_dir / "Uninstall.exe", temporary)
-    windows_directory = ("C:/" + str(directory.relative_to(prefix / "drive_c"))).replace("/", "\\")
-    wine(temporary, "/S", f"_?={windows_directory}", status=status)
+    windows_directory = str(directory) if native else "C:\\" + str(directory.relative_to(wine_drive)).replace("/", "\\")
+    run_installer(temporary, "/S", f"_?={windows_directory}", status=status)
 
 
 def assert_program_installed():
@@ -39,7 +43,7 @@ def assert_program_installed():
 
 
 def check_running_guard():
-    wine(installer, "/S", status=2)
+    run_installer(installer, "/S", status=2)
     uninstall(status=2)
     assert_program_installed()
 
@@ -51,7 +55,7 @@ def fingerprint(path):
 def main():
     previous = Path("/previous") / Path(installer).name
     upgrade = previous.is_file()
-    wine(previous if upgrade else installer, "/S")
+    run_installer(previous if upgrade else installer, "/S")
     assert_program_installed()
     proof = check(data_dir=data_dir, while_running=check_running_guard, upgrade_proof=upgrade)
     obsolete = install_dir / "project/obsolete-upgrade-test"
@@ -65,7 +69,7 @@ def main():
 
     # A crash may leave a locator file behind. Only a live launcher blocks changes.
     (data_dir / "launcher-url").write_text("http://127.0.0.1:1/")
-    wine(installer, "/S")
+    run_installer(installer, "/S")
     assert_program_installed()
     assert [fingerprint(path) for path in persistent] == digests
     if upgrade:
@@ -87,7 +91,7 @@ def main():
     assert [fingerprint(path) for path in persistent] == digests
     assert not shortcut.exists()
 
-    wine(installer, "/S")
+    run_installer(installer, "/S")
     assert_program_installed()
     assert [fingerprint(path) for path in persistent] == digests
     print("Windows installer: installation, running guard, reinstall, uninstall and data preservation passed.")

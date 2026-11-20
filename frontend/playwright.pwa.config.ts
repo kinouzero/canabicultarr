@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
+const coverage = process.env.APP_COVERAGE === '1';
 const browserName = process.env.PLAYWRIGHT_PWA_BROWSER === 'webkit' ? 'webkit' : 'chromium';
 
 export default defineConfig({
@@ -9,7 +10,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   timeout: 30_000,
-  reporter: process.env.APP_COVERAGE === '1' ? [['list'], ['./tests/coverage/reporter.ts']] : 'list',
+  reporter: coverage ? [['list'], ['./tests/coverage/reporter.ts']] : 'list',
   outputDir: 'test-results-pwa',
   use: {
     baseURL: 'http://127.0.0.1:18081',
@@ -21,7 +22,7 @@ export default defineConfig({
     launchOptions: browserName === 'chromium' ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {},
   },
   webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 18081 --strictPort',
+    command: 'npm run preview -- --host 127.0.0.1 --port 18081 --strictPort' + (coverage ? ' --outDir dist-coverage' : ''),
     url: 'http://127.0.0.1:18081',
     reuseExistingServer: false,
     timeout: 30_000,
