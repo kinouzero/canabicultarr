@@ -137,7 +137,8 @@ codesign --verify --deep --strict "$app"
 image_dir=$(mktemp -d "$build/.macos-image.XXXXXXXX")
 trap 'rm -rf "$staging" "$image_dir"' EXIT
 image="$image_dir/$artifact"
-/usr/bin/hdiutil create -quiet -fs HFS+ -format UDZO -volname "Canabicultarr Desktop" -srcfolder "$staging" "$image"
+printf 'Creating disk image for %s\n' "$arch"
+/usr/bin/hdiutil create -nospotlight -fs APFS -format UDZO -volname "Canabicultarr Desktop" -srcfolder "$staging" "$image"
 if test -n "$identity"; then
     codesign --timestamp --sign "$identity" "$image"
     codesign --verify --strict "$image"

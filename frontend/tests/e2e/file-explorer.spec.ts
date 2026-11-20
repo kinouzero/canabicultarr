@@ -64,6 +64,7 @@ test('file explorer creates nested folders, uploads into the current folder, mov
   if (process.env.PLAYWRIGHT_EXPLORER_REVIEW) await page.screenshot({ path: test.info().outputPath('canabicultarr-explorer-mobile.png'), fullPage: true, animations: 'disabled' });
   expect(errors).toEqual([]);
  } finally {
-  php(String.raw`DB::transaction(function(){$user=App\Models\User::where('email','explorer@example.test')->first();if(!$user)return;$files=App\Models\Document::withoutGlobalScopes()->where('uploaded_by',$user->id)->get();foreach($files as $file){Storage::disk($file->disk)->delete($file->path);$file->delete();}App\Models\DocumentFolder::where('created_by',$user->id)->whereNotNull('parent_id')->delete();App\Models\DocumentFolder::where('created_by',$user->id)->delete();DB::table('sessions')->where('user_id',$user->id)->delete();$user->delete();});`);
+  // Reserve the isolated database's writer before reading cleanup records.
+  php(String.raw`config(['database.connections.sqlite.transaction_mode'=>'IMMEDIATE']);DB::purge('sqlite');DB::transaction(function(){$user=App\Models\User::where('email','explorer@example.test')->first();if(!$user)return;$files=App\Models\Document::withoutGlobalScopes()->where('uploaded_by',$user->id)->get();foreach($files as $file){Storage::disk($file->disk)->delete($file->path);$file->delete();}App\Models\DocumentFolder::where('created_by',$user->id)->whereNotNull('parent_id')->delete();App\Models\DocumentFolder::where('created_by',$user->id)->delete();DB::table('sessions')->where('user_id',$user->id)->delete();$user->delete();});`);
  }
 });
