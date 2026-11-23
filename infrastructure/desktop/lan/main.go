@@ -56,19 +56,19 @@ func serve() error {
 	if err != nil || upstreamPort < 1024 || upstreamPort > 65535 || len(token) != 64 {
 		return errors.New("invalid Desktop proxy configuration")
 	}
-	cert, err := tls.LoadX509KeyPair(os.Getenv("CANABICULTARR_DESKTOP_LAN_CERT"), os.Getenv("CANABICULTARR_DESKTOP_LAN_KEY"))
+	certificates, err := newCertificateSource(
+		public.Hostname(),
+		os.Getenv("CANABICULTARR_DESKTOP_LAN_CERT"),
+		os.Getenv("CANABICULTARR_DESKTOP_LAN_KEY"),
+	)
 	if err != nil {
-		return errors.New("the Desktop HTTPS certificate and key could not be loaded")
-	}
-	now := time.Now()
-	if cert.Leaf == nil || cert.Leaf.VerifyHostname(public.Hostname()) != nil || now.Before(cert.Leaf.NotBefore) || now.After(cert.Leaf.NotAfter) {
-		return errors.New("the Desktop HTTPS certificate does not match the hostname or is outside its validity dates")
+		return err
 	}
 	target := &url.URL{Scheme: "http", Host: fmt.Sprintf("127.0.0.1:%d", upstreamPort)}
 	server := &http.Server{
 		Addr:              listen,
 		Handler:           newGateway(target, public.Host, token, subnet),
-		TLSConfig:         &tls.Config{MinVersion: tls.VersionTLS12, Certificates: []tls.Certificate{cert}},
+		TLSConfig:         &tls.Config{MinVersion: tls.VersionTLS12, GetCertificate: certificates.getCertificate},
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		IdleTimeout:       30 * time.Second,

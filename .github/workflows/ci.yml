@@ -498,6 +498,11 @@ jobs:
         with:
           go-version: '1.26'
           cache: false
+      - name: Test the Desktop HTTPS gateway
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        env:
+          GO111MODULE: 'off'
+        run: go test -race ./infrastructure/desktop/lan
       - name: Install PHP and Composer on Apple Silicon
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
         env:

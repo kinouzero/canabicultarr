@@ -991,6 +991,8 @@ private struct DesktopWindow: View {
             if desktop.settings.lanEnabled {
                 DisclosureGroup(label("customCertificate")) {
                     VStack(alignment: .leading, spacing: 8) {
+                        Text(label("customCertificateHelp")).font(.callout).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                         HStack {
                             TextField(label("lanCert"), text: $desktop.settings.lanCert)
                             Button(label("chooseNetworkFile")) { desktop.chooseNetworkFile(key: false) }

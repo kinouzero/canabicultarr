@@ -31,6 +31,7 @@ import fr from '../../locales/fr/plant-home.json';
 import plantEn from '../../locales/en/plants.json';
 import plantFr from '../../locales/fr/plants.json';
 const metricIcons = { plants: 'leaf', planned: 'clock', due: 'bell', strains: 'strain' } as const;
+const galleryLimit = 10;
 const metricFilterLabels = { plants: 'showActive', planned: 'showPlanned', due: 'showDue' } as const;
 const metricSelection = computed(() => ({ plants: !filters.dueOnly && filters.status === 'active', planned: !filters.dueOnly && filters.status === 'planned', due: filters.dueOnly }));
 function selectMetric(key: keyof typeof metricIcons) {
@@ -121,6 +122,14 @@ const filters = reactive({ status: 'active' as DashboardFilters['status'], phase
 const querySite = ref(props.initialSiteId ?? '');
 const collectionQuery = useCollectionQuery({ paths: ['/'], page: false, fields: { site: queryField.identifier(querySite), status: queryField.choice(toRef(filters, 'status'), ['active', 'planned']), phase: queryField.identifier(toRef(filters, 'phase')), strain: queryField.identifier(toRef(filters, 'strainId')), due: queryField.boolean(toRef(filters, 'dueOnly')), sort: queryField.choice(sort, dashboardSorts) }, load: () => loadScope() });
 const disclosurePreferences = useDisclosureState('dashboard');
+const channelDisclosures = useDisclosureState('dashboard-channels');
+const channelsExpanded = computed(() => channelDisclosures.isOpen('default', true));
+const hasLocationChannels = computed(() => Object.values(data.value?.locationReadings ?? {}).some(readings => readings.length > 0));
+function toggleAllChannels() {
+ const expanded = !channelsExpanded.value;
+ for (const key of Object.keys(channelDisclosures.states.value)) channelDisclosures.set(key, expanded);
+ channelDisclosures.set('default', expanded);
+}
 const disclosures = computed<Record<string, boolean>>(() => {
  const result: Record<string, boolean> = {};
  groups.value.forEach((room, roomIndex) => {
@@ -258,7 +267,7 @@ const selectionHeader = ref<HTMLElement | null>(null);
   <PlantWateringDialog v-if="waterTarget" :plant-id="waterTarget.id" :name="waterTarget.name" @close="waterTarget = null" @saved="watered" @access-lost="failure" />
   <div class="home-heading"><div><p class="eyebrow">{{ t('plantHome.eyebrow') }}</p><PageTitle icon="home">{{ t('plantHome.title') }}</PageTitle><p class="home-description">{{ t('plantHome.description') }}</p></div></div>
   <div class="dashboard-toolbar"><div class="site-controls"><label class="site-selector" for="dashboard-site"><AppIcon :name="locationIcons.site" /><span class="site-label">{{ t('plantHome.site') }}</span><select v-app-select="{ filter: $t('selectControl.filter'), empty: $t('selectControl.empty'), query: siteCatalog.query.value, onSearch: siteCatalog.search, pending: siteCatalog.loading.value || siteCatalog.failed.value, failed: siteCatalog.failed.value, more: siteCatalog.more.value && !siteCatalog.failed.value ? { label: siteCatalog.loading.value ? t('selectControl.loading') : t('selectControl.more'), load: siteCatalog.loadMore } : undefined }" id="dashboard-site" :aria-label="t('plantHome.chooseSite')" :value="site?.id ?? ''" :disabled="loadingSites || !siteCatalog.initialized.value" @change="choose(($event.target as HTMLSelectElement).value)"><option v-if="!siteOptions.length" value="">{{ t(loadingSites ? 'plantHome.loading' : noSites ? 'plantHome.noSites' : 'plantHome.chooseSite') }}</option><option v-for="option in siteOptions" :key="option.id" :value="option.id" :disabled="siteCatalog.loading.value || siteCatalog.failed.value || option.disabled">{{ option.name }}</option></select></label></div>
-   <div ref="selectionHeader" class="page-actions dashboard-actions"><ListActionButton class="refresh-button" icon="refresh" :label="t('plantHome.refresh')" :disabled="loading" :loading="loading" @click="initialize()" />
+   <div ref="selectionHeader" class="page-actions dashboard-actions"><ListActionButton v-if="hasLocationChannels" icon="sensor" :label="t(channelsExpanded ? 'plantHome.collapseChannels' : 'plantHome.expandChannels')" @click="toggleAllChannels" /><ListActionButton class="refresh-button" icon="refresh" :label="t('plantHome.refresh')" :disabled="loading" :loading="loading" @click="initialize()" />
     <Button v-if="canManage" class="dashboard-create list-action-button" data-action-icon="plus" :disabled="loadingSites || !site" @click="createPlant" :aria-label="t('plants.add')" :title="t('plants.add')" type="primary"><AppIcon name="plus" /></Button></div></div>
   <Message v-if="siteCatalog.failed.value" type="error" closable role="alert">{{ t('auth.errors.requestFailed') }} <Button attr-type="button" :aria-label="t('collection.refresh')" type="default" :disabled="siteCatalog.loading.value || loadingSites" @click="data ? siteCatalog.load(siteCatalog.retryPage.value) : initialize()"><template #icon><AppIcon name="refresh" /></template><span>{{ t('actions.refresh') }}</span></Button></Message>
   <p v-if="!updatedAt && !noSites" class="metric-update-pending" role="status">{{ t(loading ? 'plantHome.firstUpdatePending' : 'plantHome.notUpdated') }}</p>
@@ -272,7 +281,7 @@ const selectionHeader = ref<HTMLElement | null>(null);
   <Message v-if="creationNotice" closable type="success" role="status">{{ t('plants.created') }}</Message>
   <Message v-if="error" closable type="error" role="alert">{{ t(error) }}</Message>
   <p v-if="loading" class="loading-state" role="status">{{ t('plantHome.loading') }}</p>
-   <PlantBatchActions :selection-target="selectionHeader" v-model="batchSelection" :plants="groups.flatMap(room => room.zones.flatMap(zone => zone.plants.slice(0, 10)))" :disabled="loading || previewBusy" @opened="batchOpen = $event" @changed="load()" @access-lost="emit('accessLost', $event)" />
+   <PlantBatchActions :selection-target="selectionHeader" v-model="batchSelection" :plants="groups.flatMap(room => room.zones.flatMap(zone => zone.plants.slice(0, galleryLimit)))" :disabled="loading || previewBusy" @opened="batchOpen = $event" @changed="load()" @access-lost="emit('accessLost', $event)" />
   <div v-if="data" class="dashboard-results"><div v-if="!data.meta.total && !groups.length" class="home-empty"><span class="empty-symbol"><AppIcon name="leaf" /></span><h3>{{ t(hasFilters ? 'plantHome.noFilteredPlants' : filters.status === 'planned' ? 'plantHome.noPlanned' : 'plantHome.noActive') }}</h3><p>{{ t(hasFilters ? 'plantHome.noFilteredPlantsHelp' : filters.status === 'planned' ? 'plantHome.noPlannedHelp' : 'plantHome.noActiveHelp') }}</p></div>
    <details v-for="room in groups" :key="disclosureKey('room', room.id)" class="home-room" :open="disclosures[disclosureKey('room', room.id)]" @toggle="rememberDisclosure(disclosureKey('room', room.id), $event)"><DisclosureSummary :level="1" :icon="locationIcons[room.id === 'site' ? 'site' : 'room']" class="room-heading"><h3>{{ room.name }}</h3><nav v-if="room.pagination && room.pagination.last_page > 1" class="room-zone-pagination" :aria-label="t('plantHome.zonePages', { name: room.name })" @click.stop @keydown.stop><ListActionButton icon="arrowLeft" :label="t('plantHome.previousZones', { name: room.name })" :disabled="loading || room.pagination.current_page <= 1" @click.prevent="changeZonePage(room.id, room.pagination!.current_page - 1)" />
      <span>{{ room.pagination.current_page }} / {{ room.pagination.last_page }}</span>
@@ -282,9 +291,16 @@ const selectionHeader = ref<HTMLElement | null>(null);
      <h4 v-else-if="zone.name" class="unassigned-heading"><AppIcon :name="locationIcons[zone.location.type]" />{{ zone.name }}</h4>
      <template v-if="disclosures[disclosureKey('room', room.id)] && (zone.id === 'room' || disclosures[disclosureKey('zone', zone.key)])"><LocationReadings v-if="zone.id !== 'room'" :site-id="site?.id" :location-key="zone.key" :total="data?.locationReadingsMeta?.[zone.key]?.total" :context-key="`dashboard:${zone.key}`" :readings="data?.locationReadings?.[zone.key] ?? []" @access-lost="failure" /><p v-if="previewStates[zone.key] === 'loading'" class="zone-preview-status" role="status">{{ t('plantHome.loading') }}</p>
       <div v-else-if="previewStates[zone.key] === 'error'" class="zone-preview-status" role="alert"><span>{{ t('auth.errors.requestFailed') }}</span><Button type="default" @click="retryPreview(zone.key)"><template #icon><AppIcon name="refresh" /></template><span>{{ t('actions.retry') }}</span></Button></div>
-      <div v-else-if="previewStates[zone.key] === 'ready'" class="zone-gallery" tabindex="0" role="region" :aria-label="t('plantHome.zoneGallery', { name: zone.name || room.name })"><PlantPhotoCard v-for="plant in zone.plants.slice(0, 10)" :key="plant.id" :plant="plant" selectable :selected="batchSelection.includes(plant.id)" :loading="loading" :data-testid="`plant-card-${plant.id}`"
-        @changed="load()" @access-lost="failure" @select="toggleBatch(plant.id, $event)" @open="openPlant(plant.id)" @water="waterTarget = { id: plant.id, name: plant.name }" @maintenance="openPlant(plant.id, 'maintenance')" @edit="openPlant(plant.id, 'edit')" @lifecycle="plant.nextAction && (lifecycleTarget = { id: plant.id, name: plant.name, action: plant.nextAction })" /></div>
-      <div v-if="zone.total > 0" class="zone-gallery-footer"><Button type="default" :aria-label="t('plantHome.viewZonePlants', { name: zone.name || room.name, count: data.groups?.[zone.key]?.total ?? zone.plants.length })" @click="emit('browsePlants', { location: zone.location, status: filters.status })"><span>{{ t('plantHome.viewAllPlants', { count: data.groups?.[zone.key]?.total ?? zone.plants.length }) }}</span><AppIcon name="arrow" /></Button></div></template></component></details></div>
+      <div v-if="previewStates[zone.key] === 'ready' || zone.total > galleryLimit" class="zone-gallery" tabindex="0" role="region" :aria-label="t('plantHome.zoneGallery', { name: zone.name || room.name })">
+       <template v-if="previewStates[zone.key] === 'ready'">
+        <PlantPhotoCard v-for="plant in zone.plants.slice(0, galleryLimit)" :key="plant.id" :plant="plant" selectable :selected="batchSelection.includes(plant.id)" :loading="loading" :data-testid="`plant-card-${plant.id}`"
+         @changed="load()" @access-lost="failure" @select="toggleBatch(plant.id, $event)" @open="openPlant(plant.id)" @water="waterTarget = { id: plant.id, name: plant.name }" @maintenance="openPlant(plant.id, 'maintenance')" @edit="openPlant(plant.id, 'edit')" @lifecycle="plant.nextAction && (lifecycleTarget = { id: plant.id, name: plant.name, action: plant.nextAction })" />
+       </template>
+       <button v-if="zone.total > galleryLimit" type="button" class="zone-gallery-more" :aria-label="t('plantHome.viewZonePlants', { name: zone.name || room.name, count: zone.total })" @click="emit('browsePlants', { location: zone.location, status: filters.status })">
+        <span class="zone-gallery-more-icon"><AppIcon name="arrow" /></span>
+        <span>{{ t('plantHome.viewAllPlants', { count: zone.total }) }}</span>
+       </button>
+      </div></template></component></details></div>
   <CollectionPagination v-if="data?.room_meta && data.room_meta.last_page > 1" :page="data.room_meta.current_page" :last-page="data.room_meta.last_page" :total="data.room_meta.total" :disabled="loading" :label="t('plantHome.roomPages')" @page="changeRoomPage" />
   <div v-if="noSites && !loading && !error" class="home-empty"><span class="empty-symbol"><AppIcon name="location" /></span><h3>{{ t('plantHome.noSites') }}</h3><p>{{ t('plantHome.noSitesHelp') }}</p></div></section></template>
 <style scoped>
@@ -301,8 +317,31 @@ const selectionHeader = ref<HTMLElement | null>(null);
 .zone-gallery { display: flex; align-items: flex-start; gap: var(--space-3); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; padding: var(--space-1) var(--space-0-5) var(--space-3); }
 .zone-gallery > :deep(.photo-plant) { flex: 0 0 min(20rem, 100%); width: min(20rem, 100%); max-width: 100%; scroll-snap-align: start; }
 .zone-gallery:focus-visible { outline: 2px solid var(--theme-focus); outline-offset: 2px; border-radius: .6rem; }
-.zone-gallery-footer { display: flex; justify-content: flex-end; padding-top: var(--space-2); }
-.zone-gallery-footer svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+.zone-gallery-more {
+ display: flex;
+ flex: 0 0 min(9rem, 100%);
+ align-self: stretch;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ gap: var(--space-2);
+ min-height: 5.5rem;
+ padding: var(--space-3);
+ border: 1px solid var(--theme-border);
+ border-radius: .8rem;
+ background: var(--theme-subtle);
+ color: var(--theme-accent);
+ font: inherit;
+ font-size: .8rem;
+ font-weight: 600;
+ text-align: center;
+ cursor: pointer;
+ scroll-snap-align: end;
+}
+.zone-gallery-more:hover { border-color: var(--theme-accent); background: var(--theme-surface); }
+.zone-gallery-more:focus-visible { outline: 2px solid var(--theme-focus); outline-offset: -3px; }
+.zone-gallery-more-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--theme-surface); }
+.zone-gallery-more-icon svg { width: 1rem; height: 1rem; }
 
 .plant-home { min-width: 0; }.home-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-grid-gap); flex-wrap: wrap; margin: var(--space-2) 0 var(--ui-content-gap); }h2 { margin: var(--space-2) 0 var(--space-2); font-size: clamp(1.6rem, 2.4vw, 2.15rem); font-weight: 650; letter-spacing: -.055em; color: var(--theme-text, #193c30); }.eyebrow { margin: 0; color: var(--theme-muted, #63745e); font-size: .62rem; letter-spacing: .17em; font-weight: 700; }.home-description { color: var(--theme-muted, #63745e); font-size: .82rem; margin: 0; line-height: 1.6; }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }

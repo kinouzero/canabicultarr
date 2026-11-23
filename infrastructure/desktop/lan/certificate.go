@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -14,10 +15,72 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
 var dnsLabel = regexp.MustCompile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+
+const certificateCheckInterval = time.Minute
+
+type certificateSource struct {
+	host, certPath, keyPath string
+	mu                      sync.Mutex
+	current                 *tls.Certificate
+	nextCheck               time.Time
+}
+
+func newCertificateSource(host, certPath, keyPath string) (*certificateSource, error) {
+	source := &certificateSource{host: host, certPath: certPath, keyPath: keyPath}
+	now := time.Now()
+	certificate, err := source.load(now)
+	if err != nil {
+		return nil, err
+	}
+	source.current = certificate
+	source.nextCheck = now.Add(certificateCheckInterval)
+	return source, nil
+}
+
+func (s *certificateSource) load(now time.Time) (*tls.Certificate, error) {
+	certificate, err := tls.LoadX509KeyPair(s.certPath, s.keyPath)
+	if err != nil {
+		return nil, errors.New("the Desktop HTTPS certificate and key could not be loaded")
+	}
+	if certificate.Leaf == nil {
+		certificate.Leaf, err = x509.ParseCertificate(certificate.Certificate[0])
+		if err != nil {
+			return nil, errors.New("the Desktop HTTPS certificate could not be parsed")
+		}
+	}
+	if certificate.Leaf.VerifyHostname(s.host) != nil || !certificateValidAt(certificate.Leaf, now) {
+		return nil, errors.New("the Desktop HTTPS certificate does not match the hostname or is outside its validity dates")
+	}
+	return &certificate, nil
+}
+
+func (s *certificateSource) getCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := time.Now()
+	if !now.Before(s.nextCheck) {
+		s.nextCheck = now.Add(certificateCheckInterval)
+		// The issuer may replace the PEM files one at a time. Keep serving the
+		// last valid pair while a replacement is incomplete.
+		if replacement, err := s.load(now); err == nil {
+			s.current = replacement
+		}
+	}
+	if !certificateValidAt(s.current.Leaf, now) {
+		return nil, errors.New("the Desktop HTTPS certificate is outside its validity dates")
+	}
+	return s.current, nil
+}
+
+func certificateValidAt(certificate *x509.Certificate, now time.Time) bool {
+	return !now.Before(certificate.NotBefore) && !now.After(certificate.NotAfter)
+}
 
 func issueCertificate(host, directory string) error {
 	ip := net.ParseIP(host)

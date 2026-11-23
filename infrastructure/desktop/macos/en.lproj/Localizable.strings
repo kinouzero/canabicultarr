@@ -68,6 +68,7 @@
 "lanCert" = "PEM certificate chain path";
 "lanKey" = "PEM private key path";
 "lanHelp" = "Use a certificate trusted by your phone. Create the first administrator on this computer.";
+"customCertificateHelp" = "For public trust, enter your domain under Certificate hostname. Choose its full PEM chain and key. Desktop picks up renewals at the same paths automatically.";
 "chooseNetworkFile" = "Choose file";
 "lanStartupFailed" = "Could not start. Check the selected interface, HTTPS port and certificate, or turn off local network access.";
 "generateCertificate" = "Generate a local certificate";

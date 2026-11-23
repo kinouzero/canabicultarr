@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { ApiError } from '../api/auth';
 import { plantDashboardApi } from '../api/plants';
 import type { PlantMeasurement } from '../api/plants';
-import { useRememberDisclosure } from '../lib/disclosure-preferences';
+import { useDisclosureState } from '../lib/disclosure-preferences';
 import { insightPreferenceScope } from '../lib/insight-preferences';
 import { preferenceStore, setUiPreference } from '../lib/ui-preferences';
 import AppIcon from './AppIcon.vue';
@@ -19,7 +19,12 @@ const emit = defineEmits<{ accessLost: [cause: ApiError] }>();
 const { t } = useI18n();
 const scope = inject(insightPreferenceScope, undefined);
 const account = () => scope?.value ?? '';
-const vRememberDisclosure = useRememberDisclosure('dashboard-channels');
+const channelDisclosures = useDisclosureState('dashboard-channels');
+const channelsExpanded = computed(() => channelDisclosures.isOpen(props.contextKey, channelDisclosures.isOpen('default', true)));
+function rememberChannels(event: Event) {
+ const details = event.currentTarget as HTMLDetailsElement;
+ if (event.target === details && details.open !== channelsExpanded.value) channelDisclosures.set(props.contextKey, details.open);
+}
 const open = ref(false);
 const menuOpen = ref(false);
 watch(open, visible => { if (!visible) menuOpen.value = false; });
@@ -85,7 +90,7 @@ function optionAttributes(option: SelectOption | SelectGroupOption) {
 const options = computed(() => readings.value.map(reading => ({ value: reading.sensorId, label: `${reading.device.name} · ${reading.sensorName}` })));
 </script>
 <template>
- <details v-if="readings.length" v-remember-disclosure="contextKey" open class="location-readings">
+ <details v-if="readings.length" :open="channelsExpanded" class="location-readings" @toggle="rememberChannels">
   <DisclosureSummary :level="3" icon="sensor">
    <span>{{ t('plantHome.locationChannels') }}</span>
    <small>{{ t('plantHome.tileCount', { count: visible.length, total }) }}</small>

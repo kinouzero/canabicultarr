@@ -6,7 +6,7 @@ Follow each plant from sowing to archival, connect environmental sensors and kee
 
 **[User handbook](https://github.com/kinouzero/canabicultarr/wiki/Home)** · **[Installation](https://github.com/kinouzero/canabicultarr/wiki/installation)** · **[Administration](https://github.com/kinouzero/canabicultarr/wiki/settings)** · **[Development](https://github.com/kinouzero/canabicultarr/wiki/local-development)**
 
-> **0.2.0** adds Desktop installers and mobile offline access. Build from source or use a published container image. Back up your data before updating.
+> **0.2.1** adds dashboard channel controls, moves the full-list action into the plant galleries, and lets Desktop reload renewed HTTPS certificates. Back up your data before updating.
 
 ![Canabicultarr dashboard with fictional demonstration data](https://raw.githubusercontent.com/wiki/kinouzero/canabicultarr/images/dashboard.png)
 

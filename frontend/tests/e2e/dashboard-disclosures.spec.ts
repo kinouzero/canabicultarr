@@ -69,6 +69,7 @@ test('large dashboard mounts only expanded galleries and preserves selection and
  await expect(page.locator('.photo-plant')).toHaveCount(10);
  const rooms = page.locator('.home-room');
  const zones = rooms.nth(0).locator('.home-zone');
+ await expect(zones.nth(0).getByRole('button', { name: /^Tout voir/ })).toHaveCount(0);
  await (await revealTabbedControl(page.getByTestId('plant-card-plant-0').getByRole('checkbox'))).check();
  await zones.nth(0).locator('summary').click();
  await expect(page.locator('.photo-plant')).toHaveCount(0);
@@ -99,7 +100,14 @@ for (const kind of ['room', 'site'] as const) {
   await heading.click();
   await expect(selected).toBeChecked();
   await expect(page.locator('.photo-plant')).toHaveCount(10);
-  await expect(page.locator('.zone-gallery-footer button')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const gallery = page.locator('.zone-gallery');
+  const more = gallery.getByRole('button', { name: /^Tout voir \(20\)/ });
+  await expect(gallery.locator(':scope > :last-child')).toHaveText('Tout voir (20)');
+  await more.click();
+  await expect(page).toHaveURL(url => url.pathname === '/plants'
+   && url.searchParams.get('locationType') === kind
+   && url.searchParams.get('location') === (kind === 'room' ? 'room-0' : 'site-one'));
   expect(errors).toEqual([]);
  });
 }
@@ -185,6 +193,24 @@ test('location channels collapse independently from the plant gallery and rememb
  await summary.click();
  await expect(firstTile).toBeVisible();
  await expect(zoneTiles.getByRole('button', { name: 'Choisir les tuiles' })).toBeVisible();
+
+ await page.setViewportSize({ width: 390, height: 844 });
+ await page.getByRole('button', { name: 'Replier tous les canaux' }).click();
+ await expect(summary).toBeVisible();
+ await expect(firstTile).toBeHidden();
+ await expect(roomTiles.locator('.plant-reading').first()).toBeHidden();
+ await expect(gallery).toBeVisible();
+ await expect.poll(() => preferences.values()['disclosures:dashboard-channels:default']).toBe(false);
+
+ await page.reload();
+ await expect(firstTile).toBeHidden();
+ await expect(roomTiles.locator('.plant-reading').first()).toBeHidden();
+ await summary.click();
+ await expect(firstTile).toBeVisible();
+ await expect(roomTiles.locator('.plant-reading').first()).toBeHidden();
+ await page.getByRole('button', { name: 'Déplier tous les canaux' }).click();
+ await expect(firstTile).toBeVisible();
+ await expect(roomTiles.locator('.plant-reading').first()).toBeVisible();
  expect(errors).toEqual([]);
 });
 

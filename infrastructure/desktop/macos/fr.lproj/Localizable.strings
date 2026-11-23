@@ -68,6 +68,7 @@
 "lanCert" = "Chemin de la chaîne de certificats PEM";
 "lanKey" = "Chemin de la clé privée PEM";
 "lanHelp" = "Utilisez un certificat reconnu par votre téléphone. Créez le premier administrateur sur cet ordinateur.";
+"customCertificateHelp" = "Pour utiliser un certificat public, renseignez votre domaine comme nom d’hôte du certificat. Indiquez sa chaîne PEM complète et sa clé. Desktop détecte les renouvellements enregistrés aux mêmes chemins.";
 "chooseNetworkFile" = "Choisir un fichier";
 "lanStartupFailed" = "Le démarrage a échoué. Vérifiez l’interface, le port HTTPS et le certificat, ou désactivez l’accès réseau.";
 "generateCertificate" = "Créer un certificat local";

@@ -2,7 +2,7 @@ name: canabicultarr
 
 services:
   app:
-    image: ${APP_IMAGE:-ghcr.io/kinouzero/canabicultarr:0.2.0}
+    image: ${APP_IMAGE:-ghcr.io/kinouzero/canabicultarr:0.2.1}
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-./.env}

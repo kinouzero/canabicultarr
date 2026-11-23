@@ -20,7 +20,9 @@ try {
   if (version) {
     await expect(page.locator('footer .footer-version')).toContainText(version);
     await page.goto(origin + '/settings/about');
-    await expect(page.locator('.about-versions').getByText(version, { exact: true })).toBeVisible();
+    const installedVersion = page.locator('.about-versions > div')
+      .filter({ has: page.getByText('Installed version', { exact: true }) });
+    await expect(installedVersion.getByText(version, { exact: true })).toBeVisible();
     const info = await page.evaluate(async () => {
       const response = await fetch('/api/v1/application-info', { headers: { Accept: 'application/json' } });
       return { status: response.status, version: (await response.json()).data?.version };

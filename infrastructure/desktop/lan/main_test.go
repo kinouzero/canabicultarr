@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestGatewayBoundaries(t *testing.T) {
@@ -72,10 +73,11 @@ func TestGeneratedCertificate(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			pair, err := tls.LoadX509KeyPair(filepath.Join(directory, "server.pem"), filepath.Join(directory, "server.key"))
+			source, err := newCertificateSource(host, filepath.Join(directory, "server.pem"), filepath.Join(directory, "server.key"))
 			if err != nil {
 				t.Fatal(err)
 			}
+			pair := source.current
 			if len(root.SubjectKeyId) == 0 || !bytes.Equal(pair.Leaf.AuthorityKeyId, root.SubjectKeyId) {
 				t.Fatal("leaf certificate must identify the issuing key")
 			}
@@ -93,5 +95,83 @@ func TestGeneratedCertificate(t *testing.T) {
 		if err := issueCertificate(host, t.TempDir()); err == nil {
 			t.Fatalf("certificate accepted invalid host %q", host)
 		}
+	}
+}
+
+func TestGatewayReloadsRenewedCertificate(t *testing.T) {
+	t.Setenv("GODEBUG", "x509keypairleaf=0")
+	const host = "desktop.example.test"
+	active, renewed, other := t.TempDir(), t.TempDir(), t.TempDir()
+	roots := x509.NewCertPool()
+	for _, fixture := range []struct{ directory, host string }{
+		{active, host}, {renewed, host}, {other, "other.example.test"},
+	} {
+		if err := issueCertificate(fixture.host, fixture.directory); err != nil {
+			t.Fatal(err)
+		}
+		der, err := os.ReadFile(filepath.Join(fixture.directory, "trust.cer"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		root, err := x509.ParseCertificate(der)
+		if err != nil {
+			t.Fatal(err)
+		}
+		roots.AddCert(root)
+	}
+
+	source, err := newCertificateSource(host, filepath.Join(active, "server.pem"), filepath.Join(active, "server.key"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	gateway := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	gateway.TLS = &tls.Config{GetCertificate: source.getCertificate}
+	gateway.StartTLS()
+	defer gateway.Close()
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+		TLSClientConfig:   &tls.Config{RootCAs: roots, ServerName: host},
+	}
+	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
+	readSerial := func() string {
+		response, err := client.Get(gateway.URL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusNoContent || len(response.TLS.VerifiedChains) == 0 {
+			t.Fatal("expected a successful, verified TLS connection")
+		}
+		return response.TLS.PeerCertificates[0].SerialNumber.String()
+	}
+	replace := func(directory, name string) {
+		contents, err := os.ReadFile(filepath.Join(directory, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(active, name), contents, 0600); err != nil {
+			t.Fatal(err)
+		}
+		source.mu.Lock()
+		source.nextCheck = time.Time{}
+		source.mu.Unlock()
+	}
+
+	original := readSerial()
+	replace(renewed, "server.pem")
+	if got := readSerial(); got != original {
+		t.Fatal("an incomplete renewal replaced the active certificate")
+	}
+	replace(renewed, "server.key")
+	replacement := readSerial()
+	if replacement == original {
+		t.Fatal("the gateway did not serve the renewed certificate")
+	}
+	replace(other, "server.pem")
+	replace(other, "server.key")
+	if got := readSerial(); got != replacement {
+		t.Fatal("a certificate belonging to another installation replaced the active certificate")
 	}
 }
