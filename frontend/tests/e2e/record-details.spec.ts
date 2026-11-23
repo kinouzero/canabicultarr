@@ -1224,7 +1224,7 @@ test('dashboard galleries cap each zone at ten cards and open the complete locat
  await expect(home.locator('.collection-pagination')).toHaveCount(0);
  await gallery.evaluate(element => { element.scrollLeft = element.scrollWidth; });
  await expect.poll(() => gallery.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
- const complete = home.getByRole('button', { name: 'Voir toutes les plantes de Fictional Zone (12)', exact: true });
+ const complete = home.getByRole('button', { name: 'Tout voir (12) · Fictional Zone', exact: true });
  await gallery.scrollIntoViewIfNeeded();
  await complete.click();
  await expect(home).toHaveCount(0);

@@ -60,8 +60,9 @@ test('dashboard filters and sorting cover zone previews, reset safely and remain
   await expect(home.locator('#dashboard-phase')).toBeDisabled();
   await expect(home.getByRole('button', { name: 'Afficher les plantes à semer', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(home.getByRole('heading', { name: 'Aucune plante sur ce site', exact: true })).toHaveCount(0);
-  await expect(home.getByRole('button', { name: 'Voir toutes les plantes de E2E Dashboard Filter Zone (22)', exact: true })).toBeVisible();
-  await expect(home.getByRole('button', { name: 'Voir toutes les plantes de E2E Dashboard Filter Zone Second (21)', exact: true, includeHidden: true })).toHaveCount(0);
+  const firstGallery = home.getByRole('region', { name: 'Plantes de E2E Dashboard Filter Zone', exact: true });
+  await expect(firstGallery.getByRole('button', { name: 'Tout voir (22) · E2E Dashboard Filter Zone', exact: true })).toBeVisible();
+  await expect(home.getByRole('button', { name: 'Tout voir (21) · E2E Dashboard Filter Zone Second', exact: true, includeHidden: true })).toHaveCount(0);
   await expect(home.locator('.collection-pagination')).toHaveCount(0);
   await expect(home.locator('details.home-room').first()).toHaveAttribute('open', '');
   await expect(home.locator('details.home-zone').first()).toHaveAttribute('open', '');
