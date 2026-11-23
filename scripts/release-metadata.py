@@ -1,4 +1,4 @@
-"""Plan an immutable, CI-gated release without exposing registry credentials."""
+"""Plan a CI-gated release without exposing registry credentials."""
 import json
 import os
 from pathlib import Path
@@ -23,7 +23,7 @@ def compose_with_image(contents, version, ghcr=DEFAULT_GHCR):
     return COMPOSE_APP_IMAGE.sub(f'    image: ${{APP_IMAGE:-{ghcr}:{version}}}', contents)
 
 
-def release_plan(version, repository, username, sha, requested_tag, get):
+def release_plan(version, repository, username, sha, requested_tag, get, republish_sha=''):
     match = VERSION.fullmatch(version)
     if not match or not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
         raise ValueError('Invalid release version or repository.')
@@ -38,7 +38,11 @@ def release_plan(version, repository, username, sha, requested_tag, get):
     if release and release.get('draft'):
         raise ValueError('An existing draft requires review before publication.')
     published = release is not None
-    if not published:
+    republish = published and republish_sha == sha
+    if republish and release.get('immutable'):
+        raise ValueError('An immutable release cannot be republished.')
+    publish = not published or republish
+    if publish:
         reference = get(f'repos/{repository}/git/ref/tags/{tag}')
         if not reference:
             raise ValueError('An existing pushed version tag is required.')
@@ -53,7 +57,7 @@ def release_plan(version, repository, username, sha, requested_tag, get):
     channel = match.group(4) or 'latest'
     ghcr = 'ghcr.io/' + repository.lower()
     hub = username + '/' + repository.split('/')[1].lower()
-    return {'publish': str(not published).lower(), 'version': version, 'tag': tag,
+    return {'publish': str(publish).lower(), 'republish': str(republish).lower(), 'version': version, 'tag': tag,
             'prerelease': str(channel != 'latest').lower(), 'ghcr': ghcr, 'hub': hub,
             'image_tags': '\n'.join(f'{image}:{label}' for image in (ghcr, hub)
                                    for label in (version, channel, 'sha-' + sha[:12]))}
@@ -98,7 +102,8 @@ if __name__ == '__main__':
         sys.exit('Compose image does not match the release. Run python3 scripts/release-metadata.py --sync-compose before tagging.')
     plan = release_plan(version, os.environ['GITHUB_REPOSITORY'],
                         os.environ['DOCKERHUB_USERNAME'].strip().lower(),
-                        os.environ['RELEASE_SHA'], os.environ['RELEASE_TAG'], github_get)
+                        os.environ['RELEASE_SHA'], os.environ['RELEASE_TAG'], github_get,
+                        republish_sha=os.environ.get('REPUBLISH_RELEASE_SHA', ''))
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         for name, value in plan.items():
             if name == 'image_tags':

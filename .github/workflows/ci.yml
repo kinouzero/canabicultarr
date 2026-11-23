@@ -599,6 +599,7 @@ jobs:
         id: release
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          REPUBLISH_RELEASE_SHA: ${{ vars.REPUBLISH_RELEASE_SHA }}
         run: |
           test -n "$DOCKERHUB_USERNAME" || { echo 'Configure DOCKERHUB_USERNAME.' >&2; exit 1; }
           test -n "$DOCKERHUB_TOKEN" || { echo 'Configure DOCKERHUB_TOKEN.' >&2; exit 1; }
@@ -668,9 +669,19 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
           PRERELEASE: ${{ steps.release.outputs.prerelease }}
+          REPUBLISH: ${{ steps.release.outputs.republish }}
           GHCR_IMAGE: ${{ steps.release.outputs.ghcr }}
           HUB_IMAGE: ${{ steps.release.outputs.hub }}
         run: |
+          if [ "$REPUBLISH" = true ]; then
+            gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/desktop/"* --clobber
+            if [ "$PRERELEASE" = true ]; then
+              gh release edit "$RELEASE_TAG" --prerelease --latest=false
+            else
+              gh release edit "$RELEASE_TAG" --latest
+            fi
+            exit 0
+          fi
           python3 - <<'PY'
           import os
           from pathlib import Path

@@ -14,9 +14,10 @@ SHA = 'a' * 40
 
 
 class ReleaseMetadataTest(unittest.TestCase):
-    def plan(self, version='0.1.0', get=None, tag=None):
+    def plan(self, version='0.1.0', get=None, tag=None, republish_sha=''):
         return release.release_plan(version, 'Owner/Canabicultarr', 'example', SHA, tag or 'v' + version,
-                                    get or (lambda path: None if '/releases/' in path else {'object': {'type': 'commit', 'sha': SHA}}))
+                                    get or (lambda path: None if '/releases/' in path else {'object': {'type': 'commit', 'sha': SHA}}),
+                                    republish_sha=republish_sha)
 
     def test_prereleases_publish_version_channel_and_commit_tags_without_latest(self):
         plan = self.plan('1.2.3-rc.1')
@@ -54,9 +55,23 @@ class ReleaseMetadataTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, '')
 
-    def test_published_versions_are_never_overwritten(self):
-        plan = self.plan(get=lambda path: {'draft': False})
-        self.assertEqual(plan['publish'], 'false')
+    def test_published_versions_require_approval_for_the_tested_commit(self):
+        def existing(path):
+            return {'draft': False} if '/releases/' in path else {'object': {'type': 'commit', 'sha': SHA}}
+
+        self.assertEqual(self.plan(get=existing)['publish'], 'false')
+        self.assertEqual(self.plan(get=existing, republish_sha='b' * 40)['publish'], 'false')
+        plan = self.plan(get=existing, republish_sha=SHA)
+        self.assertEqual(plan['publish'], 'true')
+        self.assertEqual(plan['republish'], 'true')
+        self.assertEqual(self.plan(republish_sha=SHA)['republish'], 'false')
+
+    def test_republication_refuses_immutable_releases_and_mismatched_tags(self):
+        with self.assertRaisesRegex(ValueError, 'immutable'):
+            self.plan(get=lambda path: {'draft': False, 'immutable': True}, republish_sha=SHA)
+        with self.assertRaisesRegex(ValueError, 'does not point'):
+            self.plan(get=lambda path: {'draft': False} if '/releases/' in path else {'object': {'type': 'commit', 'sha': 'b' * 40}},
+                      republish_sha=SHA)
 
     def test_existing_drafts_and_conflicting_tags_fail_closed(self):
         with self.assertRaises(ValueError):
