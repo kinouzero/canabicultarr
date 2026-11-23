@@ -3029,17 +3029,21 @@ test('button subtabs keep readable labels, separated targets and bounded rows on
   await expect(tabs.getByRole('tab').first()).toBeVisible();
   for (const width of [1440, 390]) {
    await page.setViewportSize({ width, height: 1000 });
+   await expect(tabs.getByRole('tab').first()).toBeVisible();
    const layout = await tabs.getByRole('tab').evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect(); const style = getComputedStyle(node);
     return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, clipped: node.scrollWidth > node.clientWidth + 1, hiddenText: style.color === style.backgroundColor, label: node.textContent?.trim() };
    }));
+   expect(layout.length).toBeGreaterThan(1);
    expect(layout.every(tab => !!tab.label && !tab.clipped && !tab.hiddenText)).toBe(true);
    for (let i = 1; i < layout.length; i++) {
     const current = layout[i]!; const previous = layout[i - 1]!;
     expect(Math.abs(current.top - previous.top) < 1 ? current.left - previous.right : current.top - previous.bottom).toBeGreaterThanOrEqual(4);
    }
    expect(await tabs.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
-   await tabs.locator(':scope > .n-tabs-nav').screenshot({ path: test.info().outputPath(`button-subtabs-${section}-${width}.png`), animations: 'disabled' });
+   if (process.env.BUTTON_SUBTABS_REVIEW) {
+    await tabs.screenshot({ path: test.info().outputPath(`button-subtabs-${section}-${width}.png`), animations: 'disabled' });
+   }
   }
  }
  expect(errors).toEqual([]);
