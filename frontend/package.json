@@ -23,6 +23,7 @@
     "@iconify-icons/lucide": "2.0.31",
     "@iconify-icons/simple-icons": "^2.0.8",
     "@iconify/vue": "^5.0.5",
+    "@simplewebauthn/browser": "14.0.0",
     "chart.js": "4.6.1",
     "dompurify": "3.4.17",
     "marked": "18.1.3",

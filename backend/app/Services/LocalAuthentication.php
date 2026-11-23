@@ -43,8 +43,7 @@ class LocalAuthentication
         }
 
         RateLimiter::clear($key);
-        $request->session()->regenerate();
-        $request->session()->put('auth_version', $request->user()->session_version);
+        AuthenticationSession::refresh($request, $request->user());
         Log::notice('authentication.login.succeeded', ['user_uuid' => $request->user()->uuid]);
     }
 

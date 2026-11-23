@@ -1,4 +1,18 @@
 {
+  "passkeys": {
+    "title": "Passkeys",
+    "help": "Sign in with your device, password manager, or security key.",
+    "unsupported": "This browser cannot create passkeys at this address.",
+    "add": "Add a passkey",
+    "name": "Passkey name",
+    "created": "Added {date}",
+    "lastUsed": "Last used {date}",
+    "remove": "Remove passkey",
+    "removeNamed": "Remove passkey {name}",
+    "removeHelp": "Remove “{name}” from this account? It will no longer work for sign-in.",
+    "added": "Passkey added.",
+    "removed": "Passkey removed."
+  },
   "title": "Account security",
   "description": "Password and connected devices.",
   "back": "Back to home",

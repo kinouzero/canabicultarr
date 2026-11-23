@@ -10,14 +10,15 @@ use App\Models\User;
 use App\Services\AdministratorSetup;
 use App\Services\LocalAuthentication;
 use App\Services\NotificationAdministration;
+use App\Services\PasskeyAuthentication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class AuthenticationController extends Controller
 {
-    public function status(AdministratorSetup $setup)
+    public function status(Request $request, AdministratorSetup $setup)
     {
-        return response()->json(['data' => ['requiresSetup' => $setup->isRequired(), 'localEnabled' => (bool) config('auth.local_enabled'), 'registrationEnabled' => (bool) config('auth.local_enabled') && (bool) config('auth.registration_enabled')]]);
+        return response()->json(['data' => ['requiresSetup' => $setup->isRequired(), 'localEnabled' => (bool) config('auth.local_enabled'), 'registrationEnabled' => (bool) config('auth.local_enabled') && (bool) config('auth.registration_enabled'), 'passkeysAvailable' => PasskeyAuthentication::available($request)]]);
     }
 
     public function setup(SetupAdministratorRequest $request, AdministratorSetup $setup)

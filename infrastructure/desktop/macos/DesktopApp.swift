@@ -601,7 +601,8 @@ private final class Desktop: ObservableObject {
     }
 
     func open() {
-        if running, let url = networkURL ?? origin { NSWorkspace.shared.open(url) }
+        guard running, let port = origin?.port, let localURL = URL(string: "http://localhost:\(port)") else { return }
+        NSWorkspace.shared.open(networkURL ?? localURL)
     }
 
     var keepsRunningWithoutWindow: Bool { installed && server != nil }

@@ -33,6 +33,7 @@ use App\Http\Controllers\MonitoringAlertController;
 use App\Http\Controllers\MqttSourceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OidcAuthenticationController;
+use App\Http\Controllers\PasskeyController;
 use App\Http\Controllers\PasswordRecoveryController;
 use App\Http\Controllers\PermissionRoleController;
 use App\Http\Controllers\PlantController;
@@ -75,6 +76,8 @@ Route::prefix('api/v1')->middleware(PreventAuthCaching::class)->group(function (
     Route::get('auth/oidc/callback', [OidcAuthenticationController::class, 'callback'])->middleware('throttle:30,1,get-auth-oidc-callback:');
     Route::post('auth/register', [AuthenticationController::class, 'register'])->middleware('throttle:5,1,post-auth-register:');
     Route::post('auth/login', [AuthenticationController::class, 'login'])->middleware('throttle:30,1,post-auth-login:');
+    Route::post('auth/passkeys/options', [PasskeyController::class, 'loginOptions'])->middleware('throttle:20,1,passkey-login-options:');
+    Route::post('auth/passkeys/login', [PasskeyController::class, 'login'])->middleware('throttle:20,1,passkey-login:');
 
     Route::middleware(['auth', EnsureCurrentSession::class])->group(function () {
         Route::post('auth/oidc/link', [OidcAuthenticationController::class, 'link'])->middleware('throttle:10,1,post-auth-oidc-link:');
@@ -101,6 +104,10 @@ Route::prefix('api/v1')->middleware(PreventAuthCaching::class)->group(function (
         Route::post('account/mobile-devices/redeem', [MobileDeviceController::class, 'redeem'])->middleware('throttle:10,1,mobile-devices-redeem:');
         Route::delete('account/mobile-devices/{device}', [MobileDeviceController::class, 'destroy'])->whereUuid('device')->middleware('throttle:20,1,mobile-devices-delete:');
         Route::get('account/security', [AccountSecurityController::class, 'status'])->middleware('throttle:30,1,account-security-status:');
+        Route::get('account/passkeys', [PasskeyController::class, 'index'])->middleware('throttle:30,1,passkey-list:');
+        Route::post('account/passkeys/options', [PasskeyController::class, 'registrationOptions'])->middleware('throttle:10,1,passkey-registration-options:');
+        Route::post('account/passkeys', [PasskeyController::class, 'register'])->middleware('throttle:10,1,passkey-registration:');
+        Route::delete('account/passkeys/{passkey}', [PasskeyController::class, 'destroy'])->whereUuid('passkey')->middleware('throttle:10,1,passkey-remove:');
         Route::post('account/password', [AccountSecurityController::class, 'password'])->name('account.password')->middleware('throttle:5,1,account-security-write:');
         Route::post('account/sessions/revoke', [AccountSecurityController::class, 'revoke'])->middleware('throttle:5,1,account-security-write:');
         Route::get('notifications/inbox', [NotificationController::class, 'inbox'])->middleware('throttle:60,1,notifications-inbox:');

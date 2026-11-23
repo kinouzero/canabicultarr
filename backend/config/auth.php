@@ -4,6 +4,7 @@ use App\Models\User;
 
 return [
     'local_enabled' => env('AUTH_LOCAL_ENABLED', true),
+    'passkeys_enabled' => env('AUTH_PASSKEYS_ENABLED', true),
     'registration_enabled' => env('AUTH_REGISTRATION_ENABLED', false),
 
     /*

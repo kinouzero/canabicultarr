@@ -38,6 +38,7 @@ import { applyBranding, siteBranding, oidcProviderName } from './lib/branding';
 import { instanceSettingsApi } from './api/instanceSettings';
 import { applyDisplaySettings, resetDisplaySettings } from './lib/date-time';
 import { ApiError, authApi, type AuthUser } from './api/auth';
+import { passkeysApi, supportsPasskeys } from './api/passkeys';
 import type { ManagedUser } from './api/users';
 import type { PlantListScope } from './api/plants';
 import type { DashboardModule } from './api/dashboard';
@@ -156,6 +157,8 @@ const securityNotice = ref<SecurityResult | ''>('');
 const error = ref('');
 const oidcEnabled = ref(false);
 const localEnabled = ref(true);
+const passkeysAvailable = ref(false);
+const passkeysEnabled = computed(() => passkeysAvailable.value && supportsPasskeys());
 const registrationEnabled = ref(false);
 const oidcNotice = ref(false);
 const fields = ref<Record<string, string>>({});
@@ -201,6 +204,7 @@ async function load() {
     const [status, oidc] = await Promise.all([authApi.status(controller.signal), authApi.oidcStatus(controller.signal)]);
     oidcEnabled.value = oidc.enabled;
     localEnabled.value = status.localEnabled !== false;
+    passkeysAvailable.value = status.passkeysAvailable === true;
     registrationEnabled.value = status.registrationEnabled === true;
     oidcNotice.value = oidc.result === 'linked';
     if (oidc.result && oidc.result !== 'linked') error.value = errorKey(oidc.result);
@@ -232,7 +236,7 @@ async function load() {
   }
 }
 
-async function submit(kind: 'setup' | 'register' | 'login') {
+async function submit(kind: 'setup' | 'register' | 'login' | 'passkey') {
   if (busy.value) return;
   securityNotice.value = '';
   recoveryNotice.value = false;
@@ -240,14 +244,14 @@ async function submit(kind: 'setup' | 'register' | 'login') {
   error.value = '';
   fields.value = {};
   try {
-    if (kind !== 'login') {
+    if (kind === 'setup' || kind === 'register') {
       const input = { ...setupForm, locale: locale.value === 'fr' ? 'fr' as const : 'en' as const };
       if (kind === 'setup') await authApi.setup(input); else { const { token: _token, ...registration } = input; await authApi.register(registration); }
       confirmationPurpose.value = 'activation'; activationEmail.value = setupForm.email; activationCreated.value = true; activationToken.value = '';
       setupForm.token = setupForm.password = setupForm.password_confirmation = '';
       showActivation.value = true; mode.value = 'login'; return;
     }
-    user.value = await authApi.login(loginForm.email, loginForm.password);
+    user.value = kind === 'passkey' ? await passkeysApi.authenticate() : await authApi.login(loginForm.email, loginForm.password);
     await loadUiPreferences(user.value.id);
     setupForm.token = setupForm.password = setupForm.password_confirmation = loginForm.password = '';
     panel.value = 'home';
@@ -575,7 +579,7 @@ onUnmounted(() => {
       <HttpIngestion embedded v-else-if="showHttpIngestion && mode === 'account' && user" @close="showHttpIngestion = false" @access-lost="accessLost"><template #navigation><WorkspaceSectionTabs v-if="activeWorkspace" :workspace="activeWorkspace" :active="panel" @select="navigate($event, false)" /></template></HttpIngestion>
       <AccessProfiles embedded v-else-if="showAccessProfiles && mode === 'account' && user" @close="showAccessProfiles = false" @access-lost="accessLost"><template #navigation><UserManagementTabs active="profiles" @select="navigate($event, false)" /></template></AccessProfiles>
       <NotificationPreferences ref="notificationPreferences" v-else-if="panel === 'accountNotifications' && mode === 'account' && user" @access-lost="accessLost" />
-      <AccountSecurity ref="accountSecurity" v-else-if="showAccountSecurity && mode === 'account' && user" :oidc-linked="user.oidcLinked" :email="user.email" @secured="accountSecured" @access-lost="accessLost" />
+      <AccountSecurity ref="accountSecurity" v-else-if="showAccountSecurity && mode === 'account' && user" :oidc-linked="user.oidcLinked" :email="user.email" :passkeys-available="passkeysAvailable" @secured="accountSecured" @access-lost="accessLost" />
       <InstallationDashboard embedded :can-manage="canManage('plants.manage')" :can-manage-integrations="canManage('integrations.manage')" v-else-if="showDashboard && mode === 'account' && user" @close="showDashboard = false" @open="openDashboardModule" @access-lost="accessLost" />
       <MonitoringAlerts embedded v-else-if="showAlerts && mode === 'account' && user" :can-manage="canManage('alerts.manage')" @close="showAlerts = false" @access-lost="accessLost" />
       <MeasurementWorkspace embedded v-else-if="showMeasurements && mode === 'account' && user" @close="showMeasurements = false" @access-lost="accessLost" />
@@ -622,12 +626,13 @@ onUnmounted(() => {
               <Password placeholder="" v-model:value="loginForm.password" show-password-on="click" :status="!!fields.password ? 'error' : undefined" :disabled="busy" type="password" :input-props="{ 'id': 'login-password', 'autocomplete': 'current-password', 'aria-describedby': 'login-password-error' }"></Password>
               <small v-if="fields.password" id="login-password-error" class="field-error">{{ t(fields.password) }}</small></div>
             <Button attr-type="submit" :loading="busy" class="submit-button" type="primary"><template #icon><AppIcon name="login" /></template><span>{{ t('auth.login') }}</span></Button></form>
-          <div v-if="mode === 'login' && (localEnabled || oidcEnabled)" class="login-options"><div v-if="localEnabled" class="auth-links"><Button v-if="registrationEnabled" type="default" text :disabled="busy" class="auth-option-link" @click="mode = 'register'; error = ''; fields = {}"><span>{{ t('auth.register') }}</span></Button>
+          <div v-if="mode === 'login' && (localEnabled || oidcEnabled || passkeysEnabled)" class="login-options"><div v-if="localEnabled" class="auth-links"><Button v-if="registrationEnabled" type="default" text :disabled="busy" class="auth-option-link" @click="mode = 'register'; error = ''; fields = {}"><span>{{ t('auth.register') }}</span></Button>
               <Button type="default" text :disabled="busy" class="auth-option-link forgot-password-link" @click="openRecovery"><span>{{ t('passwordRecovery.open') }}</span></Button></div>
-            <hr v-if="localEnabled && oidcEnabled" class="auth-divider" />
+            <hr v-if="localEnabled && (oidcEnabled || passkeysEnabled)" class="auth-divider" />
+            <Button v-if="passkeysEnabled" attr-type="button" :disabled="busy" class="submit-button" @click="submit('passkey')"><template #icon><AppIcon name="key" /></template><span>{{ t('auth.passkeyLogin') }}</span></Button>
             <a v-if="oidcEnabled" class="oidc-login" href="/api/v1/auth/oidc/redirect"><OidcProviderIcon :name="siteBranding.oidcProviderIcon" />{{ t('auth.oidcLogin', { provider: oidcProviderName }) }}</a></div>
           <Button v-if="mode === 'register'" type="default" text :disabled="busy" class="recovery-link" @click="mode = 'login'; error = ''; fields = {}; setupForm.password = setupForm.password_confirmation = ''"><span>{{ t('auth.backToLogin') }}</span></Button>
-          <Message v-if="(mode === 'login' || mode === 'setup') && !localEnabled && !oidcEnabled" type="warning" closable>{{ t('auth.noSignIn') }}</Message></template></Card></div></div></main>
+          <Message v-if="(mode === 'setup' || (mode === 'login' && !passkeysEnabled)) && !localEnabled && !oidcEnabled" type="warning" closable>{{ t('auth.noSignIn') }}</Message></template></Card></div></div></main>
     <FormDialog v-if="confirmOfflineLogout" :visible="true" icon="logout" size="compact"
       :title="t('offlineJournal.logout')" :close-label="t('actions.cancel')" @update:visible="!$event && (confirmOfflineLogout = false)">
       <p>{{ t('offlineJournal.logoutHelp') }}</p>

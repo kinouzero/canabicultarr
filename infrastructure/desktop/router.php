@@ -3,7 +3,8 @@
 $root = realpath(__DIR__.'/../../frontend/dist');
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
 
-if (($_SERVER['HTTP_HOST'] ?? '') !== '127.0.0.1:'.$_SERVER['SERVER_PORT']) {
+$port = $_SERVER['SERVER_PORT'];
+if (! in_array($_SERVER['HTTP_HOST'] ?? '', ['127.0.0.1:'.$port, 'localhost:'.$port], true)) {
     http_response_code(400);
 
     return true;

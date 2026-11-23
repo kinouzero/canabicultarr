@@ -100,8 +100,7 @@ class OidcAuthentication
             $name = $identity->getName();
             $user = app(AdministratorSetup::class)->completeOidc($hash, $issuer, $subject, $email, is_string($name) ? $name : null);
             Auth::login($user);
-            $request->session()->regenerate();
-            $request->session()->put('auth_version', $user->session_version);
+            AuthenticationSession::refresh($request, $user);
 
             return;
         }
@@ -112,8 +111,7 @@ class OidcAuthentication
                 throw new AuthFlowException('auth.errors.oidcNotLinked', 403);
             }
             Auth::login($user);
-            $request->session()->regenerate();
-            $request->session()->put('auth_version', $user->session_version);
+            AuthenticationSession::refresh($request, $user);
             Log::notice('authentication.oidc.succeeded', ['user_uuid' => $user->uuid]);
         });
     }

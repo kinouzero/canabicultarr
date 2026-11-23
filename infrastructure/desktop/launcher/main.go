@@ -661,7 +661,8 @@ func (d *desktop) handler(startError bool) http.Handler {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		_ = page.Execute(w, view{Route: d.route, Language: language, Error: text[note], Notice: text[notice], Origin: d.appOrigin, Step: step, Email: email, Settings: d.settings, Colors: colors, Text: text})
+		browserOrigin := strings.Replace(d.appOrigin, "://127.0.0.1:", "://localhost:", 1)
+		_ = page.Execute(w, view{Route: d.route, Language: language, Error: text[note], Notice: text[notice], Origin: browserOrigin, Step: step, Email: email, Settings: d.settings, Colors: colors, Text: text})
 	})
 }
 

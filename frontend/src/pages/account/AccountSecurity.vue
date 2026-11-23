@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, reactive, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { NButton as Button } from 'naive-ui';
 import MobileDevices from './MobileDevices.vue';
+import AccountPasskeys from './AccountPasskeys.vue';
 import FormDialog from '../../components/FormDialog.vue';
 import AppIcon from '../../components/AppIcon.vue';
 import { oidcProviderName } from '../../lib/branding';
@@ -12,7 +13,7 @@ import { accountSecurityApi, type AccountSecurityStatus, type SecurityResult } f
 import en from '../../locales/en/account-security.json';
 import fr from '../../locales/fr/account-security.json';
 import { NInput as Password } from 'naive-ui';
-defineProps<{ oidcLinked: boolean; email: string }>();
+defineProps<{ oidcLinked: boolean; email: string; passkeysAvailable: boolean }>();
 const emit = defineEmits<{ secured: [result: SecurityResult]; accessLost: [cause: ApiError] }>();
 const { t, te, mergeLocaleMessage } = useI18n({ useScope: 'global' });
 mergeLocaleMessage('en', { accountSecurity: en }); mergeLocaleMessage('fr', { accountSecurity: fr });
@@ -62,6 +63,7 @@ onMounted(load); onUnmounted(() => { sequence++; clearSecrets(); });
    <p v-if="oidcLinked" class="provider-note"><AppIcon name="check" />{{ t('accountSecurity.oidcHelp', { provider: oidcProviderName }) }}</p>
    <Message v-if="!status.localPasswordAvailable" closable type="warning">{{ t('accountSecurity.errors.localPasswordUnavailable') }}</Message>
    <div class="security-actions"><section class="account-section"><h3><AppIcon name="shield" />{{ t('accountSecurity.passwordTitle') }}</h3><p class="section-help">{{ t('auth.passwordHelp') }}</p><Button attr-type="button" type="default" :disabled="busy || !status.localPasswordAvailable" @click="open('password')"><template #icon><AppIcon name="edit" /></template><span>{{ t('accountSecurity.managePassword') }}</span></Button></section><section class="account-section"><h3><AppIcon name="device" />{{ t('accountSecurity.revokeTitle') }}</h3><p class="section-help">{{ t('accountSecurity.revokeHelp') }}</p><Button attr-type="button" type="default" :disabled="busy || !status.localPasswordAvailable" @click="open('revoke')"><template #icon><AppIcon name="logout" /></template><span>{{ t('accountSecurity.manageSessions') }}</span></Button></section></div></template>
+  <AccountPasskeys v-if="status && passkeysAvailable" @access-lost="emit('accessLost', $event)" />
   <MobileDevices v-if="status" :email="email" @access-lost="emit('accessLost', $event)" />
   <FormDialog v-if="activeForm && status" :visible="true" icon="shield" size="compact" :title="t(activeForm === 'password' ? 'accountSecurity.passwordTitle' : 'accountSecurity.revokeTitle')" :close-label="t('accountSecurity.cancel')" :busy="busy" :error="error ? t(error) : ''" @update:visible="!$event && close()"><Message closable type="warning">{{ t('accountSecurity.signOutHelp') }}</Message>
    <form :id="`${dialogId}-security`" class="dialog-form" novalidate @submit.prevent="submit(activeForm!)"><template v-if="activeForm === 'password'"><div class="field"><label for="security-current-password">{{ t('accountSecurity.currentPassword') }}</label><Password placeholder="" v-model:value="password.current_password" :disabled="busy || !status.localPasswordAvailable" :status="activeForm === 'password' && !!fields.current_password ? 'error' : undefined" type="password" :input-props="{ 'id': 'security-current-password', 'autocomplete': 'current-password', 'aria-describedby': 'security-current-error' }"></Password><small v-if="activeForm === 'password' && fields.current_password" id="security-current-error" class="field-error">{{ t(fields.current_password) }}</small></div>
