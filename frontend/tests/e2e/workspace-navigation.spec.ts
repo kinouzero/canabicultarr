@@ -834,6 +834,7 @@ test('Homebridge imports selected accessory readings, collects, pauses and opens
  await selector.getByRole('button', { name: 'Importer les appareils sélectionnés', exact: true }).click();
  await expect.poll(() => imports).toEqual([ids]);
  await expect(selector.getByRole('checkbox')).toBeDisabled();
+ await expect(selector.getByRole('button', { name: 'Fermer le formulaire', exact: true })).toBeEnabled();
  await page.keyboard.press('Escape'); await expect(selector).toHaveCount(0);
  await page.locator('.link-list').getByRole('button', { name: 'Lire Fictional Homebridge temperature maintenant', exact: true }).click();
  await expect(page.getByText('Collecte planifiée. Rechargez la liste après traitement.', { exact: true })).toBeVisible();
