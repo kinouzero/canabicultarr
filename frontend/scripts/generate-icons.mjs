@@ -1,7 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
-// Preserve supplied browser/app icons, including maskable artwork; derive interface assets.
 const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH });
 try {
   const page = await browser.newPage();
@@ -34,4 +33,47 @@ try {
     await writeFile(new URL(`../public/branding/${name}.webp`, import.meta.url), Buffer.from(result.data, 'base64'));
     console.log(`Generated ${name}.webp (${width}×${result.height}).`);
   }
+
+  const mark = await readFile(new URL('../branding/mark.png', import.meta.url));
+  const palette = JSON.parse(await readFile(new URL('../branding/palette.json', import.meta.url), 'utf8'));
+  const installIcons = [
+    { name: 'app-192', size: 192 },
+    { name: 'pwa-512', size: 512 },
+    { name: 'app-maskable-512', size: 512, scale: 0.82 },
+    { name: 'apple-touch-icon', size: 180 },
+  ];
+  const images = await page.evaluate(async ({ data, icons }) => {
+    const mark = new Image();
+    mark.src = 'data:image/png;base64,' + data;
+    await mark.decode();
+    return icons.map(({ name, size, background, scale = 0.96 }) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const context = canvas.getContext('2d');
+      context.fillStyle = background;
+      context.fillRect(0, 0, size, size);
+      context.imageSmoothingQuality = 'high';
+      // Leave more room around the maskable mark for launcher crops.
+      const width = size * scale;
+      const inset = (size - width) / 2;
+      context.drawImage(mark, inset, inset, width, width);
+      return { name, data: canvas.toDataURL('image/png').split(',')[1] };
+    });
+  }, {
+    data: mark.toString('base64'),
+    icons: installIcons.flatMap(icon => [
+      { ...icon, background: palette.colors.dark_background },
+      { ...icon, name: icon.name + '-light', background: palette.colors.light_background },
+    ]),
+  });
+  for (const { name, data } of images) {
+    await writeFile(new URL(`../public/icons/${name}.png`, import.meta.url), Buffer.from(data, 'base64'));
+  }
+
+  const manifest = JSON.parse(await readFile(new URL('../public/manifest.webmanifest', import.meta.url), 'utf8'));
+  const lightManifest = {
+    ...manifest,
+    icons: manifest.icons.map(icon => ({ ...icon, src: icon.src.replace('.png', '-light.png') })),
+  };
+  await writeFile(new URL('../public/manifest-light.webmanifest', import.meta.url), JSON.stringify(lightManifest, null, 2) + '\n');
 } finally { await browser.close(); }

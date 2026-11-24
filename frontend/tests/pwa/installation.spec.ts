@@ -34,13 +34,15 @@ test('production metadata supplies install icons and translated manual installat
   expect(manifest.icons).toEqual(expect.arrayContaining([
     expect.objectContaining({ sizes: '192x192', purpose: 'any' }), expect.objectContaining({ sizes: '512x512', purpose: 'maskable' }),
   ]));
-  const dimensions = await page.evaluate(async () => {
-    const result = [];
-    for (const path of ['/icons/app-192.png', '/icons/app-512.png', '/icons/app-maskable-512.png', '/icons/apple-touch-icon.png']) {
-      const image = new Image(); image.src = path; await image.decode(); result.push([image.naturalWidth, image.naturalHeight]);
-    }
-    return result;
-  });
+  const dimensions = await page.evaluate(async (icons: { src: string }[]) => {
+    const touchIcon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')!;
+    return Promise.all([...icons.map(icon => icon.src), touchIcon.href].map(async path => {
+      const image = new Image();
+      image.src = path;
+      await image.decode();
+      return [image.naturalWidth, image.naturalHeight];
+    }));
+  }, manifest.icons);
   expect(dimensions).toEqual([[192,192],[512,512],[512,512],[180,180]]);
   await expect(page.locator('.app-shell')).toHaveCount(1);
   await page.locator('#language').selectOption('fr');
@@ -50,6 +52,42 @@ test('production metadata supplies install icons and translated manual installat
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   if (process.env.PLAYWRIGHT_PWA_SCREENSHOT) await page.screenshot({ path: process.env.PLAYWRIGHT_PWA_SCREENSHOT, fullPage: true, animations: 'disabled' });
 });
+
+test('install artwork follows the device theme while the site theme and app identity stay fixed', { tag: '@cross-engine' }, async ({ page, browserName }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => localStorage.setItem('appearance', 'dark'));
+  await publicLogin(page);
+  const manifestLink = page.locator('link[rel="manifest"]');
+  const touchLink = page.locator('link[rel="apple-touch-icon"]');
+  const chromium = browserName === 'chromium' ? await page.context().newCDPSession(page) : null;
+  const readManifest = async () => {
+    if (chromium) {
+      const manifest = await chromium.send('Page.getAppManifest');
+      expect(manifest.errors).toEqual([]);
+      return JSON.parse(manifest.data!);
+    }
+    const href = await manifestLink.getAttribute('href');
+    const response = await page.request.get(href!);
+    expect(response.ok()).toBe(true);
+    return response.json();
+  };
+  await expect(page.locator('html')).toHaveClass(/app-dark/);
+  await expect(manifestLink).toHaveAttribute('href', /-light\.webmanifest$/);
+  const light = await readManifest();
+  const lightTouch = await touchLink.getAttribute('href');
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(manifestLink).toHaveAttribute('href', '/manifest.webmanifest');
+  const dark = await readManifest();
+  const darkTouch = await touchLink.getAttribute('href');
+  expect(darkTouch).not.toBe(lightTouch);
+  assertMatchingInstallManifests(light, dark);
+  await expect(page.locator('html')).toHaveClass(/app-dark/);
+});
+
+function assertMatchingInstallManifests(light: { icons: { src: string }[] }, dark: { icons: { src: string }[] }) {
+  expect(light).toEqual({ ...dark, icons: dark.icons.map(icon => ({ ...icon, src: icon.src.replace('.png', '-light.png') })) });
+}
 
 test('installation help directs insecure LAN connections to trusted HTTPS', { tag: '@cross-engine' }, async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(window, 'isSecureContext', { value: false }));
