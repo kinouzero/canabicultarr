@@ -508,8 +508,8 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
         run: |
-          brew install php composer
-          echo "$(brew --prefix php)/bin" >> "$GITHUB_PATH"
+          brew install php@8.5 composer
+          echo "$(brew --prefix php@8.5)/bin" >> "$GITHUB_PATH"
       - name: Build and verify the macOS disk image
         if: runner.os == 'macOS'
         env:
@@ -517,7 +517,7 @@ jobs:
         run: |
           test "$(uname -m)" = "$DESKTOP_ARCH"
           # Intel runners provide PHP and Composer in their system image.
-          php -n -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 5 ? 0 : 1);'
+          php -n -r 'if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 5) { fwrite(STDERR, "Desktop requires PHP 8.5; found ".PHP_VERSION.PHP_EOL); exit(1); }'
           composer --working-dir=backend install --no-dev --optimize-autoloader --prefer-dist --no-scripts --no-interaction --no-progress
           CANABICULTARR_DESKTOP_VERSION="$DESKTOP_VERSION" sh infrastructure/desktop/macos/build.sh
           sh infrastructure/desktop/macos/test.sh
