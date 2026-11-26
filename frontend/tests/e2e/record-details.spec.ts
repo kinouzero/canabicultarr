@@ -2686,17 +2686,17 @@ for (const canManage of [false, true]) test(`dashboard separates rooms from filt
  await expect(toolbar).toHaveCount(canManage ? 1 : 0);
  for (const width of [1440, 390]) {
   await page.setViewportSize({ width, height: 1000 });
-  const previous = canManage ? toolbar : dashboard.locator('.dashboard-tools');
-  const gap = await dashboard.locator('.home-room').first().evaluate((room, selector) => {
-   const before = document.querySelector(selector)!;
-   return room.getBoundingClientRect().top - before.getBoundingClientRect().bottom;
-  }, canManage ? '.plant-home .batch-toolbar' : '.plant-home .dashboard-tools');
-  await expect(previous).toBeVisible();
+  const filters = dashboard.locator('.dashboard-tools');
+  await expect(filters).toBeVisible();
+  const gap = await dashboard.locator('.home-room').first().evaluate(
+   room => room.getBoundingClientRect().top - document.querySelector('.dashboard-tools')!.getBoundingClientRect().bottom,
+  );
   expect(gap).toBeCloseTo(12, 0);
-  const metricsGap = await dashboard.locator('.dashboard-tools').evaluate(filters => filters.getBoundingClientRect().top - document.querySelector('.home-metrics')!.getBoundingClientRect().bottom);
+  const metricsGap = await filters.evaluate(node => node.getBoundingClientRect().top - document.querySelector('.home-metrics')!.getBoundingClientRect().bottom);
   expect(metricsGap).toBeCloseTo(12, 0);
   if (canManage) {
-   const selectionGap = await toolbar.evaluate(bar => bar.getBoundingClientRect().top - document.querySelector('.dashboard-tools')!.getBoundingClientRect().bottom);
+   await expect(toolbar).toBeVisible();
+   const selectionGap = await toolbar.evaluate(bar => document.querySelector('.home-metrics')!.getBoundingClientRect().top - bar.getBoundingClientRect().bottom);
    expect(selectionGap).toBeCloseTo(12, 0);
   }
  }
