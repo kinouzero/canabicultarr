@@ -1841,6 +1841,10 @@ test('batch dashboard watering reviews eligibility, protects drafts and retries 
  await selectAll.click();
  await expect(page.locator('.page-actions').getByRole('button', { name: 'Tout désélectionner' })).toHaveAttribute('aria-pressed', 'true');
  await expect(toolbar).toContainText('3 plantes sélectionnées');
+ await expect(toolbar.getByRole('button', { name: 'Vider la sélection' })).toHaveCount(0);
+ await page.locator('.page-actions').getByRole('button', { name: 'Tout désélectionner' }).click();
+ await expect(toolbar).toHaveCount(0);
+ await selectAll.click();
  for (const width of [1440, 1024, 768, 390]) {
   await page.setViewportSize({ width, height: 1000 });
   const heights = await toolbar.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getBoundingClientRect().height));

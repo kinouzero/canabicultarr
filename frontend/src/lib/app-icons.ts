@@ -44,6 +44,7 @@ import sun from '@iconify-icons/lucide/sun';
 import moon from '@iconify-icons/lucide/moon';
 import search from '@iconify-icons/lucide/search';
 import eye from '@iconify-icons/lucide/eye';
+import eyeOff from '@iconify-icons/lucide/eye-off';
 import trash from '@iconify-icons/lucide/trash-2';
 import unlink from '@iconify-icons/lucide/unlink';
 import sprout from '@iconify-icons/lucide/sprout';
@@ -108,7 +109,7 @@ import type { IconifyIcon } from '@iconify/vue/offline';
 
 // Bundle only used icons; integration brands retain their official logos.
 export const appIcons: Record<string, IconifyIcon> = {
- bluetooth, hash, qrcode, printer, zone, layoutGrid, table, copy, save, temperature, substrate, carbonDioxide, ph, conductivity, pressure, power, energy, waterLevel, battery, binary, star, arrowLeft, arrowUp, library, palette, check, box, building, fan, light, lightOff, socketOff, humidity, pump, humidifier, dehumidifier, socket, equipment, file, pdf, image, plus, sun, moon, search, eye, trash, unlink, sprout, flower, hanger, rack, jar, hourglass, pot, expand, edit, water, scissors, harvest, download, archive, clock, warning, help, home, seed, strain, journal, message, leaf, location, device, sensor, monitor, chart, report, database, inventory, folder, plug, settings, users, bell, diagnostics, notification, login, key, userPlus, shield, user, logout, menu, close, chevron, web, externalLink, arrow, refresh, camera, homeassistant, homebridge, github, info, mail, webhook,
+ bluetooth, hash, qrcode, printer, zone, layoutGrid, table, copy, save, temperature, substrate, carbonDioxide, ph, conductivity, pressure, power, energy, waterLevel, battery, binary, star, arrowLeft, arrowUp, library, palette, check, box, building, fan, light, lightOff, socketOff, humidity, pump, humidifier, dehumidifier, socket, equipment, file, pdf, image, plus, sun, moon, search, eye, eyeOff, trash, unlink, sprout, flower, hanger, rack, jar, hourglass, pot, expand, edit, water, scissors, harvest, download, archive, clock, warning, help, home, seed, strain, journal, message, leaf, location, device, sensor, monitor, chart, report, database, inventory, folder, plug, settings, users, bell, diagnostics, notification, login, key, userPlus, shield, user, logout, menu, close, chevron, web, externalLink, arrow, refresh, camera, homeassistant, homebridge, github, info, mail, webhook,
  starFilled: { ...star, body: star.body.replace('fill="none"', 'fill="currentColor"') },
 };
 export const appIconNames: Record<string, string> = {
@@ -158,6 +159,7 @@ export const appIconNames: Record<string, string> = {
  moon: 'lucide:moon',
  search: 'lucide:search',
  eye: 'lucide:eye',
+ eyeOff: 'lucide:eye-off',
  trash: 'lucide:trash-2',
  unlink: 'lucide:unlink',
  sprout: 'lucide:sprout',

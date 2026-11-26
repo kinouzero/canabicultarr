@@ -196,6 +196,7 @@ test('location channels collapse independently from the plant gallery and rememb
 
  await page.setViewportSize({ width: 390, height: 844 });
  await page.getByRole('button', { name: 'Replier tous les canaux' }).click();
+ await expect(page.getByRole('button', { name: 'Déplier tous les canaux' })).toHaveAttribute('aria-expanded', 'false');
  await expect(summary).toBeVisible();
  await expect(firstTile).toBeHidden();
  await expect(roomTiles.locator('.plant-reading').first()).toBeHidden();
@@ -209,6 +210,7 @@ test('location channels collapse independently from the plant gallery and rememb
  await expect(firstTile).toBeVisible();
  await expect(roomTiles.locator('.plant-reading').first()).toBeHidden();
  await page.getByRole('button', { name: 'Déplier tous les canaux' }).click();
+ await expect(page.getByRole('button', { name: 'Replier tous les canaux' })).toHaveAttribute('aria-expanded', 'true');
  await expect(firstTile).toBeVisible();
  await expect(roomTiles.locator('.plant-reading').first()).toBeVisible();
  expect(errors).toEqual([]);

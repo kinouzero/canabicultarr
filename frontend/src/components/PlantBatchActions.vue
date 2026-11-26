@@ -24,7 +24,7 @@ import { ApiError } from '../api/auth';
 type Kind = 'water' | 'maintenance' | 'lifecycle';
 type Result = 'ready' | 'saving' | 'done' | 'failed';
 interface Row { id: string; name: string; plant: Plant | null; error: string; requestId: string; state: Result; weight: string | number }
-const props = defineProps<{ plants: { id: string; name: string; canManage: boolean; canDelete?: boolean }[]; disabled?: boolean; selectionTarget?: HTMLElement | null }>();
+const props = defineProps<{ plants: { id: string; name: string; canManage: boolean; canDelete?: boolean }[]; disabled?: boolean; selectionTarget?: HTMLElement | null; dashboard?: boolean }>();
 const selected = defineModel<string[]>({ required: true });
 const emit = defineEmits<{ changed: []; opened: [value: boolean]; accessLost: [cause: ApiError] }>();
 const { t, te } = useI18n();
@@ -151,7 +151,7 @@ async function save() {
   <CollectionSelectAllButton :label="t('plants.batch.selectAll')" :pressed="allSelected || (!!selected.length && 'mixed')" :disabled="disabled || busy" @toggle="selected = allSelected ? [] : available.map(row => row.id)" />
  </Teleport>
  <div v-if="available.length && selected.length" class="batch-toolbar-container">
-  <section class="batch-toolbar" :class="{ 'has-selection': selected.length }" :aria-label="t('plants.batch.title')">
+  <section class="batch-toolbar" :class="{ 'has-selection': selected.length, 'batch-toolbar--dashboard': dashboard }" :aria-label="t('plants.batch.title')">
    <div class="batch-selection-row">
     <div class="batch-overview">
      <span class="batch-symbol"><AppIcon name="check" /></span>
@@ -160,7 +160,7 @@ async function save() {
       <small :title="t('plants.batch.visibleOnly')">{{ t('plants.batch.scope') }}</small>
      </div>
     </div>
-    <div class="batch-selection-tools">
+    <div v-if="!dashboard" class="batch-selection-tools">
      <ListActionButton v-if="selected.length" class="batch-clear" icon="close" :label="t('plants.batch.clear')" :disabled="disabled || busy" @click="selected = []" />
     </div>
    </div>
@@ -258,6 +258,16 @@ async function save() {
 }
 .batch-toolbar :deep(.n-button__content) { white-space: nowrap; }
 .batch-toolbar :deep(.n-button__icon svg) { width: .95rem; height: .95rem; flex-shrink: 0; }
+@container (min-width: 45rem) {
+ .batch-toolbar--dashboard { display: flex; align-items: center; }
+ .batch-toolbar--dashboard .batch-selection-row { flex-shrink: 0; }
+ .batch-toolbar--dashboard .batch-action-row { flex: 1; flex-wrap: nowrap; }
+}
+@container (45rem <= width < 55rem) {
+ .batch-toolbar--dashboard .batch-management :deep(.n-button) { width: var(--batch-control-height); padding: 0; }
+ .batch-toolbar--dashboard .batch-management :deep(.n-button__content) { display: none; }
+ .batch-toolbar--dashboard .batch-management :deep(.n-button__icon) { margin: 0; }
+}
 @container (max-width: 42rem) {
  .batch-toolbar { --batch-control-height: var(--app-control-height, 2.5rem); }
  .batch-symbol { display: none; }
