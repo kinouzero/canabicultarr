@@ -46,6 +46,7 @@ test('dashboard filters and sorting cover zone previews, reset safely and remain
   await page.getByRole('button', { name: 'Utiliser le modèle', exact: true }).click();
   await expect(page.locator('#plant-watering-comment')).toHaveValue(/^Watered E2E Dashboard Filter Z Growth \/ E2E Dashboard Filter Strain B \/ /);
   await (await revealTabbedControl(watering.locator('#plant-watering-choice'))).selectOption('without');
+  await expect(watering.getByRole('textbox', { name: 'Volume d’eau (L par plante)' })).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer l’arrosage', exact: true }).click();
   await expect(watering).toHaveCount(0);
   await expect(home.getByTestId(`plant-card-${fixture.growth}`)).toContainText('Prochain : avec fertilisant');
